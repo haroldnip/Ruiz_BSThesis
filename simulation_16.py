@@ -70,3 +70,60 @@ class Road_Configuration:
 
     def vehicle_density(self):
         return len(self.vehicles) / self.road_length
+    
+
+class Traffic_System:
+    def __init__(self, roads):
+        self.roads = roads
+        self.occupancy_history = []  # To store the road occupancy at each time step
+        self.exiting_data = []  # To store the number of vehicles exiting each road at each timestep
+
+    def transfer_vehicle(self, vehicle, to_road):
+        vehicle.position = 0  # Reset position to the beginning of the new road
+        to_road.vehicles.append(vehicle)
+        to_road.update_occupancy()
+
+    
+    def update(self):
+        timestep_exiting_data = []
+        for road in self.roads:
+            timestep_exiting_data.append({
+                "Timestep": len(self.occupancy_history) + 1,
+                "Road_number": self.roads.index(road) + 1,
+                "Vehicle_density": road.vehicle_density(),
+                "Vehicles_Exiting": 0
+            })
+
+        # First three roads produce vehicles
+        for road in self.roads[:3]:
+            road.produce_vehicles()
+
+        # Update all roads
+        for road in self.roads:
+            road.update()
+
+        # Transfer vehicles from first three roads to the fourth road (node)
+        node_road = self.roads[3]
+        for road in self.roads[:3]:
+            vehicles_to_transfer = [vehicle for vehicle in road.vehicles if vehicle.position >= road.road_length]
+            for vehicle in vehicles_to_transfer:
+                self.transfer_vehicle(vehicle, node_road)
+                timestep_exiting_data[self.roads.index(road)]["Vehicles_Exiting"] += 1
+            road.vehicles = [vehicle for vehicle in road.vehicles if vehicle.position < road.road_length]
+
+        # Transfer vehicles from the fourth road (node) to the available roads (5, 6, 7)
+        for vehicle in node_road.vehicles[:]:
+            if vehicle.position >= node_road.road_length:
+                transferred = False
+                for target_road in self.roads[4:]:
+                    if np.sum(target_road.road_occupancy[0, :]) == 0:  # Check the availability of the first cell
+                        self.transfer_vehicle(vehicle, target_road)
+                        transferred = True
+                        break
+                if transferred:
+                    node_road.vehicles = [v for v in node_road.vehicles if v.vehicle_id != vehicle.vehicle_id]
+                    timestep_exiting_data[3]["Vehicles_Exiting"] += 1
+
+        # Store the occupancy history for all roads
+        self.occupancy_history.append([road.road_occupancy.copy() for road in self.roads])
+        self.exiting_data.extend(timestep_exiting_data)
