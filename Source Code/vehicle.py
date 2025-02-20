@@ -45,16 +45,16 @@ class Vehicle:
         """Increases vehicle's speed by 1 cell, up to the maximum speed"""
         if self.speed < self.max_speed:
             self.speed += 1
-            print(f"{self.vehicle_type} {self.vehicle_id} accelerated to a speed of {self.speed}")
+            # print(f"{self.vehicle_type} {self.vehicle_id} accelerated to a speed of {self.speed}")
 
     def gap_distance(self, vehicle_row_to_be_checked):  #This is responsible for VEHICLE gap distance
         """Debugging this - make gap distance consider toroidal boundary cond. recently introduced"""
         """vehicle row to be checked: Input is row 0, you check for lane 1(row 0 and 1). Input is row 1, you check for lane at the middle (row 1 and 2). Input is row 2, you check for lane 2(rows 2 and 3)."""
         rear_bumper_position = self.rear_bumper_position
-        print(f"{self.vehicle_type} {self.vehicle_id}'s rear bumper is at {rear_bumper_position}")
-        print(f"{self.vehicle_type} {self.vehicle_id}'s front bumper is at {self.front_bumper_position}")
+        #print(f"{self.vehicle_type} {self.vehicle_id}'s rear bumper is at {rear_bumper_position}")
+        #print(f"{self.vehicle_type} {self.vehicle_id}'s front bumper is at {self.front_bumper_position}")
         look_ahead_distance = self.speed #With t=1
-        print(f"{self.vehicle_type} {self.vehicle_id}'s maximum distance is  {look_ahead_distance}")
+        #print(f"{self.vehicle_type} {self.vehicle_id}'s maximum distance is  {look_ahead_distance}")
         road_length = self.road_designation.length
         #print(f"{self.vehicle_type} {self.vehicle_id}'s road has length of {road_length}")
         
@@ -91,7 +91,7 @@ class Vehicle:
         
         if self.speed == 0:
             self.accelerate()
-            print(f"{self.vehicle_type} {self.vehicle_id} accelerates to possibly lane change. ")
+            #print(f"{self.vehicle_type} {self.vehicle_id} accelerates to possibly lane change. ")
 
         rolled_occupancy = np.roll(self.road_designation.occupancy, -self.front_bumper_position, axis = 0)
 
@@ -100,9 +100,9 @@ class Vehicle:
             self.move()
             if self.current_row == 1:
                 self.lane_change_trials_for_passengers = 0
-                print(f"{self.vehicle_type} {self.vehicle_id} begins straddling, it is on row {self.current_row}, positions {self.rear_bumper_position}-{self.front_bumper_position}")
+                #print(f"{self.vehicle_type} {self.vehicle_id} begins straddling, it is on row {self.current_row}, positions {self.rear_bumper_position}-{self.front_bumper_position}")
         else:
-            print(f"{self.vehicle_type} {self.vehicle_id} cannot straddle. ")
+            #print(f"{self.vehicle_type} {self.vehicle_id} cannot straddle. ")
         return
 
     def is_lane_change_allowed(self, target_row):
@@ -121,13 +121,13 @@ class Vehicle:
             future_positions = [(self.rear_bumper_position + i) % road_length for i in range(0, self.length + look_ahead_distance)] #Detect passengers that are adjacent to the vehicle and within its look ahead distance
             if any(len(self.sidewalk.passengers[position]) > 0 for position in future_positions):
                 return True
-                print(f"{self.vehicle_type} {self.vehicle_id} detects passengers adjacent and ahead")
+                #print(f"{self.vehicle_type} {self.vehicle_id} detects passengers adjacent and ahead")
             else:
                 return False
-                print(f"{self.vehicle_type} {self.vehicle_id} detects no passengers")
+                #print(f"{self.vehicle_type} {self.vehicle_id} detects no passengers")
         else:
             return False
-            print(f"{self.vehicle_type} {self.vehicle_id} is not a passenger vehicle")
+            #print(f"{self.vehicle_type} {self.vehicle_id} is not a passenger vehicle")
 
     def collect_passenger_destinations(self):
         """If the passenger's destination is within sight, this method collects passenger"""
@@ -352,13 +352,13 @@ class Vehicle:
             # if least_distance_to_decelerate == nearest_vehicle_distance:
             #     target_speed = nearest_vehicle_distance
             #     reason = "prevent collisions"
-            #     print(f" {self.vehicle_type} {self.vehicle_id} needs to decelerate to {least_distance_to_decelerate} to {reason}")
+                # print(f" {self.vehicle_type} {self.vehicle_id} needs to decelerate to {least_distance_to_decelerate} to {reason}")
 
                 
             # else: #least_distance_to_decelerate in [nearest_pedestrian_distance, nearest_destination_distance]:
             #     target_speed = min(nearest_pedestrian_distance, nearest_destination_distance)
             #     reason = "for passengers"
-            #     print(f" {self.vehicle_type} {self.vehicle_id} needs to decelerate to {least_distance_to_decelerate} {reason}")
+                # print(f" {self.vehicle_type} {self.vehicle_id} needs to decelerate to {least_distance_to_decelerate} {reason}")
 
             deceleration = self.speed - target_speed
             print(f" {self.vehicle_type} {self.vehicle_id} needs to decelerate by {deceleration}.")
@@ -424,7 +424,7 @@ class Vehicle:
 
     def unloading(self, unloaded_passengers): #Deceleration and lane changing of vehicle was already handled
         """This method handles unloading of passengers, assuming lane changing and deceleration for them have been implemented previously"""
-        print(f"{self.vehicle_type} {self.vehicle_id} is calling unloading method")
+        # print(f"{self.vehicle_type} {self.vehicle_id} is calling unloading method")
         #For debugging purposes
         # passenger_destinations = self.collect_passenger_destinations()
         # print(f"{self.vehicle_type} {self.vehicle_id}'s passenger destinations are {passenger_destinations}")
@@ -434,16 +434,16 @@ class Vehicle:
         # print(f"{self.vehicle_type} {self.vehicle_id}'s passenger destinations are {passenger_destinations}")
         # self.determine_if_overshot_destination()
         # if self.overshot_destination:
-        #     print(f"{self.vehicle_type} {self.vehicle_id} overshot a passenger's destination.")
+            # print(f"{self.vehicle_type} {self.vehicle_id} overshot a passenger's destination.")
         # self.matching_stops_on_sidewalk(passenger_destinations)
 
         #-------------------------------------------------------------------------------
         if self.vehicle_type == "jeep":
-            print(f"{self.vehicle_type} {self.vehicle_id}'s speed is {self.speed}")
+            # print(f"{self.vehicle_type} {self.vehicle_id}'s speed is {self.speed}")
             if self.will_unload_passengers() and self.speed == 0:
-                print(f"{self.vehicle_type} {self.vehicle_id} stopped to unload passengers.")
+                # print(f"{self.vehicle_type} {self.vehicle_id} stopped to unload passengers.")
                 if self.matching_stop_found or self.overshot_destination:
-                    print(f"{self.vehicle_type} {self.vehicle_id} nees to stop because the destination is either adjacent to the vehicle or overshot by it.")
+                    # print(f"{self.vehicle_type} {self.vehicle_id} nees to stop because the destination is either adjacent to the vehicle or overshot by it.")
                     if self.current_row == 0: #The deceleration method stops the vehicle to v = 0 if needed
                         self.lane_change_direction = None
                         for passenger in self.passengers_within_vehicle: #Try list comprehension as well
@@ -468,7 +468,7 @@ class Vehicle:
     def get_adjacent_sidewalk_cell(self, road_cell):
         """This method obtains the sidewalk cell adjacent to a given road cell position"""
         sidewalk_cell = self.sidewalk.occupancy[road_cell]
-        print(f"{self.vehicle_type} {self.vehicle_id} is trying to access passengers at sidewalk position {road_cell}")
+        # print(f"{self.vehicle_type} {self.vehicle_id} is trying to access passengers at sidewalk position {road_cell}")
         return sidewalk_cell
 
     def load_passengers(self, sidewalk_cell, passenger_list):
@@ -477,7 +477,7 @@ class Vehicle:
         self.unoccupied_seats = self.capacity - self.occupied_seats
 
         while self.unoccupied_seats > 0 and len(passenger_list) > 0:
-            print(f"{self.vehicle_type} {self.vehicle_id} is trying to load passengers")
+            # print(f"{self.vehicle_type} {self.vehicle_id} is trying to load passengers")
             passenger1 = passenger_list.pop(0) #First-come, first-served
             passenger1.board_vehicle(self)
             self.passengers_within_vehicle.append(passenger1)
@@ -488,46 +488,46 @@ class Vehicle:
 
     def loading(self):
         """This method supervises boarding of passengers, assuming the vehicle have already decelerrated/ changed lanes for them"""
-        print(f"{self.vehicle_type} {self.vehicle_id} is calling loading method")
+        # print(f"{self.vehicle_type} {self.vehicle_id} is calling loading method")
         if self.vehicle_type == "jeep" and self.occupied_seats < self.capacity:
             if self.detect_passengers_adjacent_and_ahead():
-                print(f"{self.vehicle_type} {self.vehicle_id} detected passengers")
+                # print(f"{self.vehicle_type} {self.vehicle_id} detected passengers")
                 start_index = self.rear_bumper_position
                 end_index = self.rear_bumper_position + self.length + self.speed
                 index = start_index
                 road_length = self.road_designation.length
-                print(f"{self.vehicle_type} {self.vehicle_id} detected passengers starting from {start_index} to {end_index}.")
+                # print(f"{self.vehicle_type} {self.vehicle_id} detected passengers starting from {start_index} to {end_index}.")
                 loaded_passengers = 0
                 while index < end_index:
-                    print(f"{self.vehicle_type} {self.vehicle_id} is currently checking at {index}.")
+                    # print(f"{self.vehicle_type} {self.vehicle_id} is currently checking at {index}.")
                     road_cell = index % road_length
                     sidewalk_cell = self.get_adjacent_sidewalk_cell(road_cell)
                     passenger_list = self.sidewalk.passengers[road_cell]
 
                     if sidewalk_cell == 0 or len(passenger_list) == 0:
                         index += 1
-                        print(f"{self.vehicle_type} {self.vehicle_id} detected no passengers, we shift to position {index}.")
+                        # print(f"{self.vehicle_type} {self.vehicle_id} detected no passengers, we shift to position {index}.")
                         continue
 
                     if self.current_row == 0:
-                        print(f"{self.vehicle_type} {self.vehicle_id}is at the nearer lane.")
+                        # print(f"{self.vehicle_type} {self.vehicle_id}is at the nearer lane.")
                         if self.speed == 0:
-                            print(f" {self.vehicle_type} {self.vehicle_id} stopped to load passengers.")
+                            # print(f" {self.vehicle_type} {self.vehicle_id} stopped to load passengers.")
                             loaded_passengers += self.load_passengers(sidewalk_cell, passenger_list)
                     elif self.current_row == 2:
                         if self.lane_change_trials_for_passengers >= 4:
-                            print(f"{self.vehicle_type} {self.vehicle_id} will load at the far lane.")
+                            # print(f"{self.vehicle_type} {self.vehicle_id} will load at the far lane.")
                             if self.speed == 0:
-                                print(f" {self.vehicle_type} {self.vehicle_id} stopped to load passengers.")
+                                # print(f" {self.vehicle_type} {self.vehicle_id} stopped to load passengers.")
                                 loaded_passengers += self.load_passengers(sidewalk_cell, passenger_list)
 
                     index += 1
-                print(f"Loaded {loaded_passengers} passengers. Current passengers: {len(self.passengers_within_vehicle)} ")
+                # print(f"Loaded {loaded_passengers} passengers. Current passengers: {len(self.passengers_within_vehicle)} ")
         return
 
     def random_slowdown(self):
         """Mimics random slowdown, randomly decreases vehicle's speed based on braking probability """
-        print(f"{self.vehicle_type} {self.vehicle_id} is calling random slowdown method")
+        # print(f"{self.vehicle_type} {self.vehicle_id} is calling random slowdown method")
         if np.random.rand() < self.braking_prob and self.speed > 0:
             self.speed -= 1
         return
@@ -563,7 +563,7 @@ class Vehicle:
         self.front_bumper_position = new_position + self.length - 1
         self.next_rear_bumper_position = new_position + self.speed
         self.next_front_bumper_position = self.next_rear_bumper_position + self.length - 1
-        print(f"Vehicle {self.vehicle_id}'s previous position is {self.previous_rear_bumper_position}, right now its current position is {self.rear_bumper_position}. Based on its speed, it aims to move to {self.next_rear_bumper_position}.")
+        # print(f"Vehicle {self.vehicle_id}'s previous position is {self.previous_rear_bumper_position}, right now its current position is {self.rear_bumper_position}. Based on its speed, it aims to move to {self.next_rear_bumper_position}.")
         self.determine_cross_edge()
         self.determine_if_about_to_cross_edge()
         self.update_pool_of_occupied_positions()

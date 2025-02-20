@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import pandas as pd
 
 from vehicle import Vehicle
 from road import Road
@@ -121,3 +122,106 @@ class IntraRoadSimulator:
         plt.yticks(range(0, self.road.width, 1))
         plt.tight_layout()
         plt.show()
+
+#-------------------------------------------------------
+
+#The following methods were saved when running vehicle-ONLY algorithm (saved for future purposes, but not used on this simulation yet)
+    def populate_the_road(self, jeep_lane_change_prob, truck_lane_change_prob, adjacent_sidewalk, boarding_time, jeepney_allowed_rows, truck_allowed_rows):
+        "This method makes sure all vehicles are spawned on the road"
+        if (self.spawned_vehicles < self.total_vehicles) and (self.unsuccessful_vehicle_placement_tries < (self.road.road_length/3)): #If not all vehicles have been spawned yet
+            #Alternate between spawning trucks and jeeps
+            truck_length, jeep_length = 7, 3
+            truck_width, jeep_width = 2, 2
+            
+            if np.random.rand() < 0.5: #Equal chances of both vehicle types to be placed
+                if (self.spawned_trucks < self.total_trucks):
+                    # for x_position in range(self.road.road_length):
+                    self.place_vehicles('truck', truck_length, truck_width, truck_lane_change_prob, adjacent_sidewalk, jeepney_allowed_rows, truck_allowed_rows)
+            else:
+                if (self.spawned_jeeps < self.total_jeeps):
+                    # for x_position in range(self.road.road_length):
+                    self.place_vehicles('jeep', jeep_length, jeep_width, jeep_lane_change_prob, adjacent_sidewalk, jeepney_allowed_rows, truck_allowed_rows)
+            #self.simulation_step()
+            for vehicle in self.vehicles:
+                vehicle.speed = 0
+        elif self.unsuccessful_vehicle_placement_tries > (self.total_vehicles*2): # After certain number of tries, the vehicle cannot be placed and we stopped populating the road
+            self.simulation_step(boarding_time)
+        else:
+            self.simulation_step(boarding_time)
+
+    def run_simulation(self, max_timesteps, truck_lane_change_prob, jeep_lane_change_prob, transient_time, adjacent_sidewalk, visualize=False):
+        "Run the simulation for a specified number of timesteps"
+        timestep = 0
+        self.update_occupancy()
+
+        #Create a DataFrame to store the results
+        data = []
+
+        while timestep < max_timesteps:
+            self.current_time = timestep
+            self.populate_the_road(jeep_lane_change_prob, truck_lane_change_prob, adjacent_sidewalk, timestep)
+            if timestep >= transient_time:
+                self.populate_the_road(jeep_lane_change_prob, truck_lane_change_prob, adjacent_sidewalk, timestep)
+                #calculate actual truck fraction and actual density
+                actual_truck_fraction = self.spawned_trucks/self.spawned_vehicles
+                actual_density = (self.spawned_vehicles_occupancy) / (self.road.road_length*self.road.road_width)
+                actual_truck_occupancy_fraction = (self.spawned_trucks*14)/ (self.road.road_length*self.road.road_width)
+                print(f"The actual density on the road is {actual_density}. Actual truck fraction is {actual_truck_fraction}.")
+                throughput = self.throughput_counter.calculate_throughput()
+
+                #Store the results in the data list
+                data.append({
+                    "Timestep":timestep,
+                    "Actual Density": actual_density,
+                    "Actual Truck Fraction":actual_truck_fraction,
+                    "Throughput": throughput,
+                    "Truck Occupancy": actual_truck_occupancy_fraction
+                })
+            else:
+                self.throughput_counter.reset_counting()
+
+            if visualize:
+                print(f"Timestep {timestep}:")
+                self.visualize(timestep)
+
+            timestep += 1
+        
+        print(f"Simulation complete. Total vehicles passed through position 99: {self.throughput_counter.calculate_throughput()}")
+        
+        results_df = pd.DataFrame(data)
+        return results_df
+
+    def simulation_step(self, boarding_time):
+        np.random.shuffle(self.vehicles)
+        for vehicle in self.vehicles:
+            if vehicle.current_row == 1: # We  dont have to check for speed because vehicles cannot straddle if their v = 0
+                vehicle.handle_straddling() 
+                self.update_occupancy()
+            elif np.random.rand() < vehicle.lane_changing_prob:
+                #print("calling lane changing method")
+                # Change lane if possible
+                vehicle.lane_changing()
+                vehicle.accelerate()
+                #print(f"ACCELERATE DEBUGGER: {vehicle.vehicle_type} {vehicle.vehicle_id} has accelerated at a speed of {vehicle.speed}")
+                vehicle.load_passenger(boarding_time)
+                vehicle.unloading()
+                vehicle.decelerate() # Decelerate if necessar
+                vehicle.braking()
+                #print(f"BEFORE MOVE DEBUGGER: {vehicle.vehicle_type} {vehicle.vehicle_id} is at position {vehicle.x_position}")
+                #self.throughput_counter.count_vehicle(vehicle)
+               
+                vehicle.move()  # Move the vehicle
+                #print(f"AFTER MOVE DEBUGGER: {vehicle.vehicle_type} {vehicle.vehicle_id} is at position {vehicle.x_position}, with a speed of {vehicle.speed} at row {vehicle.current_row}")
+                self.update_occupancy()  # Update the road occupancy grid
+                #self.throughput_counter.count_vehicles_at_timestep(self.vehicles)
+            else:
+                vehicle.accelerate()
+                vehicle.load_passenger(boarding_time)
+                vehicle.unloading()
+                vehicle.decelerate() 
+                vehicle.braking()
+                vehicle.move()
+                self.update_occupancy() 
+
+            # Count vehicles passing through the monitored position (e.g., position 99)
+            self.throughput_counter.count_vehicle(vehicle)
