@@ -32,6 +32,7 @@ class Passenger:
         self.overshoot_destination = None
         self.destination_within_view = None
         self.destination_adjacent_to_vehicle = None
+        self.riding_speed = None
         #self.edge_crossings_to_see_destination = edge_crossings_to_see_destination
 
     def board_vehicle(self, vehicle):
@@ -43,19 +44,20 @@ class Passenger:
         self.road_position = vehicle.rear_bumper_position
         self.riding_status = "chilling"
         self.sidewalk_position = None
-        print(f"Passenger {self.passenger_id} boarded {vehicle.vehicle_type} {vehicle.vehicle_id}")
+        # print(f"Passenger {self.passenger_id} boarded {vehicle.vehicle_type} {vehicle.vehicle_id}")
         if vehicle.did_cross_edge:
             self.edge_crossings_at_start = True
-            print(f"Passenger {self.passenger_id} boarded {vehicle.vehicle_type} {vehicle.vehicle_id}, which just crossed the boundary.")
+            # print(f"Passenger {self.passenger_id} boarded {vehicle.vehicle_type} {vehicle.vehicle_id}, which just crossed the boundary.")
         return
 
     def alight_vehicle(self, vehicle):
         """This method removes the passenger from the vehicle when the destination have been reached"""
-        if self.riding_status == "let me out":
+        if self.riding_status == "let me out" or self.overshoot_destination:
             self.on_vehicle = False
             self.riding_status = "off"
             self.arrived_at_destination_time = self.current_time
             self.sidewalk_position = None
+            print(f"Passenger {self.passenger_id} alighted the jeepney.")
             print(f"Passenger {self.passenger_id} has reached his destination at {self.destination_stop}.")
             print(f"The passengers within the vehicle are {vehicle.passengers_within_vehicle}")
         return
@@ -66,7 +68,7 @@ class Passenger:
             if self.edge_crossings_at_start:
                 self.edge_crossings = 0
                 self.edge_crossings_at_start = False
-                print(f"Passenger {self.passenger_id} boarded on vehicle {vehicle.vehicle_id}, which just crossed the edge. We reset edge crossing of passenger to 0.")
+                # print(f"Passenger {self.passenger_id} boarded on vehicle {vehicle.vehicle_id}, which just crossed the edge. We reset edge crossing of passenger to 0.")
         return
 
     def determine_crossing_edge_status(self, vehicle):
@@ -99,10 +101,10 @@ class Passenger:
             elif self.edge_crossings == 0 and self.about_to_cross_edge:  # See all stops before crossing
                 self.set_of_stops_in_sight = self.sidewalk_designation.boarding_stops.copy()
                 self.set_of_stops_in_sight.extend(self.sidewalk_designation.alighting_stops)  #  Fix: Extend instead of append
-                print(f"Passenger {self.passenger_id} with edge crossings = {self.edge_crossings} and about to cross edge sees the stops {self.stops_in_sight}")
+                #print(f"Passenger {self.passenger_id} with edge crossings = {self.edge_crossings} and about to cross edge sees the stops {self.stops_in_sight}")
             elif self.edge_crossings == 1:  # After crossing, only see alighting stops
                 self.set_of_stops_in_sight = self.sidewalk_designation.alighting_stops.copy()
-                print(f"Passenger {self.passenger_id} with edge crossings = {self.edge_crossings}  sees the stops {self.stops_in_sight}")
+                #print(f"Passenger {self.passenger_id} with edge crossings = {self.edge_crossings}  sees the stops {self.stops_in_sight}")
 
     def determine_stops_in_view(self, vehicle):  
         """
@@ -119,18 +121,19 @@ class Passenger:
             self.stops_in_view = [
                 stop[0] for stop_list in self.set_of_stops_in_sight for stop in [stop_list]
                 if vehicle.rear_bumper_position <= stop[0].position <= vehicle.rear_bumper_position + vehicle.length + vehicle.speed]
-            print(f"Passenger {self.passenger_id} with edge crossings = {self.edge_crossings} views the stops {self.stops_in_view}")
+            #print(f"Passenger {self.passenger_id} with edge crossings = {self.edge_crossings}" )
+            #print(f"views the stops {self.stops_in_view}")
         return
 
     def determine_if_destination_within_view(self, vehicle): #destination should be a stop
         """This method assumes that the passenger will never overshoot the destination without first notifying the driver that it needs to come out of the vehicle
         The mechanism accures that we always say "para" bago posibleng lumagpas sa destination."""
         if self.on_vehicle:
-            print(f"Passenger {self.passenger_id}'s destination is at {self.destination_stop.position}. He is current at {vehicle.pool_of_occupied_positions} with {self.edge_crossings} edge crossings.")
+            # print(f"Passenger {self.passenger_id}'s destination is at {self.destination_stop.position}. He is current at {vehicle.pool_of_occupied_positions} with {self.edge_crossings} edge crossings.")
             if self.destination_stop in self.stops_in_view:
                 self.destination_within_view = True
                 self.riding_status = "let me out"
-                print(f"As seen by passenger {self.passenger_id}, his destination {self.destination_stop} is within sight.")
+                print(f"As seen by passenger {self.passenger_id}, his destination {self.destination_stop.position} is within sight. The vehicle is at {vehicle.pool_of_occupied_positions}")
             #I removed the else statement so that when this mechanism is triggered, it will stay TRUE all the time
         return
 
@@ -151,13 +154,13 @@ class Passenger:
                 if self.destination_stop in self.sidewalk_designation.alighting_stops[vehicle.rear_bumper_position:road_length] or\
                     self.destination_stop in self.sidewalk_designation.alighting_stops[0:vehicle.front_bumper_position]:
                     self.destination_adjacent_to_vehicle = True
-                    print(f"Passenger {self.passenger_id}'s destination is adjacent to {vehicle.vehicle_type} {vehicle.vehicle_id}.")
+                    # print(f"Passenger {self.passenger_id}'s destination is adjacent to {vehicle.vehicle_type} {vehicle.vehicle_id}.")
                 else:
                     self.destination_adjacent_to_vehicle = False
             else:
                 if self.destination_stop in self.sidewalk_designation.alighting_stops[vehicle.rear_bumper_position:vehicle.front_bumper_position]:
                     self.destination_adjacent_to_vehicle = True
-                    print(f"Passenger {self.passenger_id}'s destination is adjacent to {vehicle.vehicle_type} {vehicle.vehicle_id}.")
+                    # print(f"Passenger {self.passenger_id}'s destination is adjacent to {vehicle.vehicle_type} {vehicle.vehicle_id}.")
                 else:
                     self.destination_adjacent_to_vehicle = False
         return
@@ -167,10 +170,10 @@ class Passenger:
         """
         Updates riding status based on the vehicle's position.
         """
-        print(f"Updating Passenger {self.passenger_id}'s riding status")
+        # print(f"Updating Passenger {self.passenger_id}'s riding status")
         if self.on_vehicle:
             if self.riding_status == "let me out":
-                print(f"Passenger {self.passenger_id} wants to get out.")
+                # print(f"Passenger {self.passenger_id} wants to get out.")
                 self.determine_crossing_edge_status(vehicle)
                 self.determine_edge_crossing_at_start(vehicle)
                 self.determine_stops_in_view(vehicle)
@@ -179,7 +182,7 @@ class Passenger:
                 self.determine_if_destination_is_adjacent(vehicle)
                 return
             elif self.riding_status == "chilling":
-                print(f"Passenger {self.passenger_id} is chilling.")
+                # print(f"Passenger {self.passenger_id} is chilling.")
                 self.determine_crossing_edge_status(vehicle)
                 self.determine_edge_crossing_at_start(vehicle)
                 self.determine_stops_in_view(vehicle)
@@ -290,13 +293,13 @@ class Passenger:
 
     def calculate_riding_time(self):
         if self.riding_status == "off":
-            print(f"The passenger arrived at its destination at time {self.arrived_at_destination_time}. It boarded the jeepney at time {self.jeep_boarding_time}")
+            # print(f"The passenger arrived at its destination at time {self.arrived_at_destination_time}. It boarded the jeepney at time {self.jeep_boarding_time}")
             self.riding_time = self.arrived_at_destination_time - self.jeep_boarding_time
-            print(f"The riding time of passenger {self.passenger_id} is {self.riding_time}.")
+            # print(f"The riding time of passenger {self.passenger_id} is {self.riding_time}.")
         elif self.riding_status == "chilling":
-            print(f"Passenger {self.passenger_id} boarded the jeep at {self.jeep_boarding_time}.")
+            # print(f"Passenger {self.passenger_id} boarded the jeep at {self.jeep_boarding_time}.")
             self.riding_time = self.current_time - self.jeep_boarding_time
-            print(f"The current riding time of passenger {self.passenger_id} is {self.riding_time}. The passenger is still in the jeep.")
+            # print(f"The current riding time of passenger {self.passenger_id} is {self.riding_time}. The passenger is still in the jeep.")
         elif self.riding_status is None:
             pass
             return 
@@ -304,14 +307,20 @@ class Passenger:
 
     def calculate_waiting_time(self):
         if self.riding_status == "chilling" or "off":
-            print(f"The passenger arrived at the sidewalk at time {self.sidewalk_entry_time}. It boarded the jeepney at time {self.jeep_boarding_time}")
+            # print(f"The passenger arrived at the sidewalk at time {self.sidewalk_entry_time}. It boarded the jeepney at time {self.jeep_boarding_time}")
             self.waiting_time = self.jeep_boarding_time - self.sidewalk_entry_time
-            print(f"Passenger {self.passenger_id} waited for {self.waiting_time} before boarding a jeepney.")
+            # print(f"Passenger {self.passenger_id} waited for {self.waiting_time} before boarding a jeepney.")
         elif self.riding_status is None:
-            print(f"The passenger arrived at the sidewalk at time {self.sidewalk_entry_time}.The current time is {self.current_time}")
+            # print(f"The passenger arrived at the sidewalk at time {self.sidewalk_entry_time}.The current time is {self.current_time}")
             self.waiting_time = self.current_time - self.sidewalk_entry_time
-            print(f"The current waiting time of passenger {self.passenger_id} is {self.waiting_time}.")
+            # print(f"The current waiting time of passenger {self.passenger_id} is {self.waiting_time}.")
             return
+
+    def calculate_riding_speed(self, total_simulation_time):
+        if self.riding_status == "off":
+            distance_travelled = (self.road_designation.length - self.sidewalk_position) + self.destination_stop.position #Assuming the maximum number of edge crossing is 1(farthest)
+            self.riding_speed = distance_travelled/total_simulation_time
+        return self.riding_speed
 
 
 

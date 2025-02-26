@@ -89,13 +89,14 @@ class IntraRoadSimulator:
                 self.place_one_vehicle(x_position, row, vehicle_type, length, width, lane_changing_prob, safe_stopping_speed, safe_deceleration, adjacent_sidewalk)                        
                 ## next placement will be on the other row
                 self.spawned_vehicles += 1
-                print(f"Placed {vehicle_type} at position {x_position} on row {row}.")
+                #print(f"Placed {vehicle_type} at position {x_position} on row {row}.")
                 return  # Exit the method after successfully placing the vehicle
             else:
-                print(f"Waiting: Desired position occupied, no space to place a new {vehicle_type}.")
+                #print(f"Waiting: Desired position occupied, no space to place a new {vehicle_type}.")
+                pass
 
         self.unsuccessful_vehicle_placement_tries += 1   #Number of times a vehicle is tried to be placed but there are no space available    
-        print(f"No space available for {vehicle_type}")
+        #print(f"No space available for {vehicle_type}")
 
     def initialize_vehicles(self, density, truck_fraction):
         "The number of trucks and jeepneys are determined"
@@ -166,7 +167,7 @@ class IntraRoadSimulator:
                 actual_truck_fraction = self.spawned_trucks/self.spawned_vehicles
                 actual_density = (self.spawned_vehicles_occupancy) / (self.road.road_length*self.road.road_width)
                 actual_truck_occupancy_fraction = (self.spawned_trucks*14)/ (self.road.road_length*self.road.road_width)
-                print(f"The actual density on the road is {actual_density}. Actual truck fraction is {actual_truck_fraction}.")
+                #print(f"The actual density on the road is {actual_density}. Actual truck fraction is {actual_truck_fraction}.")
                 throughput = self.throughput_counter.calculate_throughput()
 
                 #Store the results in the data list
@@ -181,7 +182,7 @@ class IntraRoadSimulator:
                 self.throughput_counter.reset_counting()
 
             if visualize:
-                print(f"Timestep {timestep}:")
+                #print(f"Timestep {timestep}:")
                 self.visualize(timestep)
 
             timestep += 1

@@ -49,12 +49,12 @@ class Passenger_Simulator:
         for position in range(0, self.sidewalk.length, stop_to_stop_distance):
             new_stop = Stop(position, stop_id)
             self.sidewalk.boarding_stops[position].append(new_stop)
-        print(f"The boarding stops generated are {self.sidewalk.boarding_stops}")
+        #print(f"The boarding stops generated are {self.sidewalk.boarding_stops}")
         stop_id = 1 # Alighting stops have stop_id = 1
         for position in range(0, self.sidewalk.length, stop_to_stop_distance):
             new_stop = Stop(position, stop_id)
             self.sidewalk.alighting_stops[position].append(new_stop)
-        print(f"The alighting stops generated are {self.sidewalk.alighting_stops}")
+       # print(f"The alighting stops generated are {self.sidewalk.alighting_stops}")
 
     def generate_passengers(self, vehicle_simulator, current_time_pass):#Put an algorithm that generates passengers only on designated stops
         """Generate new passengers based on the arrival rate and places them on the sidewalk."""
@@ -77,7 +77,7 @@ class Passenger_Simulator:
                         new_passenger = Passenger(self.current_time, self.sidewalk, 
                         self.road_designation, position, distance_within_sight_param, 
                         destination, current_time_pass, vehicle_simulator)
-                        print(f"Passenger {new_passenger.passenger_id}'s destinations at {new_passenger.destination_stop}")
+                        #print(f"Passenger {new_passenger.passenger_id}'s destinations at {new_passenger.destination_stop}")
                         self.passengers.append(new_passenger)
                         #print(f"The passenger list after the passenger is at position {col} is {self.passengers}")
                         self.sidewalk.passengers[position].append(new_passenger)
@@ -85,7 +85,7 @@ class Passenger_Simulator:
                         self.update_occupancy()
                         #print(f"Passenger added at position {col}.")
                         #print(f"Passenger {new_passenger.passenger_id} was added to position {position}, where the destination is at {destination_position}.")
-        print(f"Time {self.current_time}: {len(self.passengers)} passengers generated.")
+        #print(f"Time {self.current_time}: {len(self.passengers)} passengers generated.")
 
     def visualize(self, step_count):
         """Visualize the sidewalk occupancy using a colormap."""
