@@ -301,6 +301,7 @@ class Vehicle:
         #Search for the first occupied space within the look ahead distance
         pedestrian_headway_list = np.where(rolled_sidewalk_shifted[1:look_ahead_distance + 1] > 0)[0] #1 yung index after nung front bumper(which makes sense)
         #The array above will never cross boundary conditions (this will only be calculated for jeepneys, maximum speed is 5, and jeep length is 3. The farthest it could go is until index 7. )
+        #print(f"The nearest pedestrian to {self.vehicle_type} {self.vehicle_id} is {pedestrian_headway_list[0]}.")
         return pedestrian_headway_list[0] if pedestrian_headway_list.size > 0 else look_ahead_distance
 
     def determine_if_overshot_destination(self):
@@ -343,18 +344,48 @@ class Vehicle:
         # print(f"{self.vehicle_type} {self.vehicle_id} sees rolled destination: {rolled_destinations}")
         #Find the first nonzero index (or the nearest stop)
         nearest_distance = np.where(rolled_destinations[1:look_ahead_distance+1] > 0)[0]
+        #print(f"{self.vehicle_type} {self.vehicle_id}'s nearest destination distance is {nearest_distance[0]-2}")
         return max(0, nearest_distance[0] - 2) if nearest_distance.size > 0 else inf
+
+    def determine_reason_to_decelerate(self, nearest_destination_distance, nearest_pedestrian_distance, nearest_vehicle_distance):
+        if self.vehicle_type == "jeep":
+            # # Compute distances
+            # nearest_destination_distance = self.calculate_nearest_destination_distance()  # 0 if overshot, otherwise distance from front bumper
+            # nearest_pedestrian_distance = self.pedestrian_headway()  # 0 if adjacent, otherwise distance
+            # nearest_vehicle_distance = self.gap_distance(self.current_row)  # Gap distance in own lane
+
+            # Check if jeepney has space for more passengers
+            can_load_passengers = len(self.passengers_within_vehicle) < self.capacity
+
+            # Determine the minimum stopping distance
+            if can_load_passengers:
+                least_distance_to_decelerate = min(nearest_destination_distance, nearest_pedestrian_distance, nearest_vehicle_distance)
+            else:  # If full, it won’t stop for passengers
+                least_distance_to_decelerate = min(nearest_destination_distance, nearest_vehicle_distance)
+
+            # Determine the reason for deceleration
+            if least_distance_to_decelerate == nearest_vehicle_distance:
+                return "avoid collisions"
+            if least_distance_to_decelerate == nearest_destination_distance:
+                return "unload passengers"
+            if least_distance_to_decelerate == nearest_pedestrian_distance and can_load_passengers:
+                return "load passengers"
+        
+        # Default for non-jeep vehicles
+        return "avoid collisions"
+
 
 
     def decelerate(self):
         """Decelerate to prevent collisions, load passengers, or unload passengers"""
         nearest_destination_distance = self.calculate_nearest_destination_distance() #if overshot, automatically 0. If not, calculate based on distance from front bumper
-        # print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_destination_distance} cells away from the nearest destination.")
+        print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_destination_distance} cells away from the nearest destination.")
         nearest_pedestrian_distance = self.pedestrian_headway() #if adjacent to vehicle 0, if not, calculate based on distance from front bumper
-        # print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_pedestrian_distance} cells away from the nearest pedestrian.")
+        print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_pedestrian_distance} cells away from the nearest pedestrian.")
         nearest_vehicle_distance = self.gap_distance(self.current_row) #gap distance in own lane
-        # print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_vehicle_distance} cells away from the nearest vehicle.")
-        #reason = None
+        print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_vehicle_distance} cells away from the nearest vehicle.")
+        reason = self.determine_reason_to_decelerate(nearest_destination_distance, nearest_pedestrian_distance, nearest_vehicle_distance)
+        
         if self.vehicle_type == "jeep":
         #determine minimum distance to decelerate
             if self.capacity > len(self.passengers_within_vehicle):
@@ -363,21 +394,12 @@ class Vehicle:
                 least_distance_to_decelerate = min(nearest_destination_distance, nearest_vehicle_distance)
 
             target_speed = least_distance_to_decelerate
-            # if least_distance_to_decelerate == nearest_vehicle_distance:
-            #     target_speed = nearest_vehicle_distance
-            #     reason = "prevent collisions"
-                #print(f" {self.vehicle_type} {self.vehicle_id} needs to decelerate to {least_distance_to_decelerate} to {reason}")
-
-                
-            # else: #least_distance_to_decelerate in [nearest_pedestrian_distance, nearest_destination_distance]:
-            #     target_speed = min(nearest_pedestrian_distance, nearest_destination_distance)
-            #     reason = "for passengers"
-                # print(f" {self.vehicle_type} {self.vehicle_id} needs to decelerate to {least_distance_to_decelerate} {reason}")
 
             deceleration = self.speed - target_speed
-            # print(f" {self.vehicle_type} {self.vehicle_id} needs to decelerate by {deceleration}.")
+            print(f" {self.vehicle_type} {self.vehicle_id} needs to decelerate by {deceleration} to {reason}.")
             #Put an algorithm here that details the reason for stopping and the 
             if deceleration > 0: #skip deceleration if not needed
+                print(f"{self.vehicle_type} {self.vehicle_id} needs to decelerate by {deceleration}")
                 #Decelerate safely (if decelerating for passengers, later, we will still check for collisions)
                 if deceleration > self.safe_deceleration:
                     new_speed = max(0, self.speed - self.safe_deceleration)
@@ -392,6 +414,7 @@ class Vehicle:
                 self.speed = max(0, min(new_speed, nearest_vehicle_distance)) # Ensure new_speed does not exceed nearest vehicle gap
                 # print(f" {self.vehicle_type} {self.vehicle_id} decelerated to {self.speed}.")
             elif deceleration < 0: #This handles the case when the vehicle that is about to unload passengers stopped too early before reaching the destination ,to prevent collisions.
+                print(f"{self.vehicle_type} {self.vehicle_id} needs to decelerate by {deceleration}")
                 self.accelerate()
                 print(f"{self.vehicle_type} {self.vehicle_id} accelerated to a speed {self.speed} because it stopped too early")
         else:

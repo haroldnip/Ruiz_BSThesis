@@ -59,14 +59,13 @@ class IntegratedSimulator:
                 vehicle.lane_changing()
                 print(f"{vehicle.vehicle_type} {vehicle.vehicle_id}: Overshot a destination? --- {vehicle.overshot_destination}. Lane change trials  = {vehicle.lane_change_trials_for_passengers}")
                 vehicle.decelerate()
-                print(f"{vehicle.vehicle_type} {vehicle.vehicle_id} has {len(vehicle.passengers_within_vehicle)} before unloading.")
+                print(f"{vehicle.vehicle_type} {vehicle.vehicle_id} has {len(vehicle.passengers_within_vehicle)} before calling unloading method.")
                 vehicle.unloading(self.unloaded_passengers)
                 for passenger in self.unloaded_passengers:
                     passenger.calculate_riding_time()
                     #print(f"Passenger {passenger.passenger_id}'s riding status is {passenger.riding_status} and the riding time is {passenger.riding_time}.")
-                print(f"{vehicle.vehicle_type} {vehicle.vehicle_id} has {len(vehicle.passengers_within_vehicle)} after unloading.")
-                if timestep >= transient_time:
-                    vehicle.loading()
+                print(f"{vehicle.vehicle_type} {vehicle.vehicle_id} has {len(vehicle.passengers_within_vehicle)} after calling unloading method.")
+                vehicle.loading()
                 for passenger in vehicle.passengers_within_vehicle:
                     passenger.update_riding_status(vehicle)
                     passenger.calculate_waiting_time()
@@ -84,8 +83,7 @@ class IntegratedSimulator:
                     passenger.calculate_riding_time()
                     #print(f"Passenger {passenger.passenger_id}'s riding status is {passenger.riding_status} and the riding time is {passenger.riding_time}.")
                     self.pedestrian_simulator.update_sidewalk_occupancy()
-                if timestep >= transient_time:
-                    vehicle.loading()
+                vehicle.loading()
                 for passenger in vehicle.passengers_within_vehicle:
                     passenger.update_riding_status(vehicle)
                     passenger.calculate_waiting_time()
@@ -95,6 +93,7 @@ class IntegratedSimulator:
 
                 for passenger in vehicle.passengers_within_vehicle:
                     passenger.update_riding_status(vehicle)
+
                 #Collect individual speeds of vehicles per timestep (To compute the spatial mean speed per timestep)
                 self.vehicle_speeds.append(vehicle.speed) #include the vehicle's speed on the list of all the vehicle's speed
                 if vehicle.vehicle_type == "jeep":
@@ -104,11 +103,12 @@ class IntegratedSimulator:
                 #Collect speed of a vehicle per timestep
                 vehicle.temporal_speeds.append(vehicle.speed)
 
-            self.vehicle_simulator.update_occupancy()
+            self.vehicle_simulator.update_occupancy(timestep)
             # Count vehicles passing through the monitored position (e.g., position 99)
             self.counter.count_vehicle(vehicle)
             self.counter.count_passenger(vehicle)
         
+        self.vehicle_simulator.occupancy_history.append((timestep, self.vehicle_simulator.road.occupancy.copy()))
         for passenger_list in self.pedestrian_simulator.sidewalk.passengers:
             for passenger in passenger_list:
                 passenger.switch_sidewalk_position()
@@ -190,19 +190,16 @@ class IntegratedSimulator:
             
             timestep += 1
             # Collect passenger data(after running the whole simulation)
-        
-        occupancy_history = np.array(self.vehicle_simulator.occupancy_history).T
-        print(f"The occupancy history is {occupancy_history}.")
-        timesteps, positions, rows = occupancy_history.shape
-        road_occupancy = pd.DataFrame(occupancy_history.reshape(timesteps * rows, positions))
-        # Insert a column to track time steps and road row indices
-        road_occupancy.insert(0, "Timestep", np.repeat(np.arange(timesteps), rows))  
-        road_occupancy.insert(1, "Road Row", np.tile(np.arange(rows), timesteps))
+        occupancy_data = []
+        for timestep, occupancy_grid in self.vehicle_simulator.occupancy_history:
+            print(f"The number of rows on the road based on occupancy grid is {occupancy_grid.shape[1]}")
+            for y in range(occupancy_grid.shape[1]):  # Loop over each row (y-axis)
+                occupancy_data.append([timestep, y] + occupancy_grid[:, y].tolist())  # Store row-wise data
 
-
-        # road_occupancy = pd.DataFrame(self.vehicle_simulator.occupancy_history)
-        # road_occupancy.insert(0, "Timestep", timestep)  # Mark the timestep for each row
-        data_spatio_temporal = road_occupancy
+        # Create DataFrame
+        road_length = self.vehicle_simulator.road.length
+        columns = ["Timestep", "Road Row"] + [f"Pos {x}" for x in range(road_length)]
+        data_spatio_temporal = pd.DataFrame(occupancy_data, columns=columns)
 
         for passenger in self.pedestrian_simulator.passengers:
             riding_time = passenger.riding_time
@@ -262,20 +259,20 @@ class IntegratedSimulator:
         """Visualize the road and sidewalk occupancy in a single figure."""
         fig, axs = plt.subplots(
             2, 1, figsize=(20, 8), 
-            gridspec_kw={'height_ratios': [4, 1]},  # Road is taller than the sidewalk
+            gridspec_kw={'height_ratios': [2, 1]},  # Road is taller than the sidewalk
             sharex=True)
 
         # Road visualization (Top subplot)
         axs[0].imshow(self.vehicle_simulator.road.occupancy.T, cmap=self.vehicle_simulator.cmap, norm=self.vehicle_simulator.norm, origin='lower')
         axs[0].set_title(f'Step {step_count}')
-        axs[0].set_ylabel('Lane')
-        axs[0].set_yticks(range(0, self.vehicle_simulator.road.width, 1))
+        # axs[0].set_ylabel('Lane')
+        # axs[0].set_yticks(range(0, self.vehicle_simulator.road.width, 1))
 
         # Sidewalk visualization (Bottom subplot)
         axs[1].imshow(self.pedestrian_simulator.sidewalk.occupancy.T, cmap=self.pedestrian_simulator.cmap, norm=self.pedestrian_simulator.norm, origin='lower')
-        axs[1].set_title('Sidewalk Occupancy')
-        axs[1].set_xlabel('Position (cells)')
-        axs[1].set_ylabel('Sidewalk Width')
+        #axs[1].set_title('Sidewalk Occupancy')
+        #axs[1].set_xlabel('Position (cells)')
+        #axs[1].set_ylabel('Sidewalk Width')
         axs[1].set_yticks(range(0, self.pedestrian_simulator.sidewalk.width, 1))
 
         # Align x-axis and improve layout

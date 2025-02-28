@@ -31,7 +31,7 @@ class IntraRoadSimulator:
         self.jeep_spatial_speeds = [] #mean speed of jeepneys for each timestep 
         self.truck_spatial_speeds = []  #mean speed of trucks for each timestep 
 
-    def update_occupancy(self):
+    def update_occupancy(self, timestep):
         """This method updates road occupancy based on vehicle position and length"""
         self.road.occupancy.fill(0)
         for vehicle in self.vehicles:
@@ -51,7 +51,7 @@ class IntraRoadSimulator:
                 else:
                     self.road.occupancy[x_start:, y_start:y_end] = 2
                     self.road.occupancy[:x_end, y_start:y_end] = 2
-        self.occupancy_history.append(self.road.occupancy.copy())
+        # self.occupancy_history.append((timestep, self.road.occupancy.copy()))
 
     def place_one_vehicle(self, vehicle_initial_rear_bumper_position, vehicle_initial_row, vehicle_type, length, width, lane_changing_prob, safe_stopping_speed, safe_deceleration, adjacent_sidewalk):
          #This position that position is correct and already determined
@@ -124,8 +124,7 @@ class IntraRoadSimulator:
         plt.tight_layout()
         plt.show()
 
-#-------------------------------------------------------
-
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #The following methods were saved when running vehicle-ONLY algorithm (saved for future purposes, but not used on this simulation yet)
     def populate_the_road(self, jeep_lane_change_prob, truck_lane_change_prob, adjacent_sidewalk, boarding_time, jeepney_allowed_rows, truck_allowed_rows):
         "This method makes sure all vehicles are spawned on the road"
