@@ -72,7 +72,7 @@ class Passenger_Simulator:
                         
                         for stop_list in set_of_stops:
                             for stop in stop_list:
-                                if stop.position == position:
+                                if stop.position == position: #(position - 10) % self.road_designation.length:
                                     destination = stop #Dirac-delta distribution of distances
 
                         # print(f"The destination position for the passenger initiated at position {position} is {position}")

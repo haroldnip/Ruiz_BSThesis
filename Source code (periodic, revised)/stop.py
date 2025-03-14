@@ -4,5 +4,6 @@ class Stop:
         self.stop_id = stop_id
         self.loading_list = []
         self.unloading_list = []
+        self.unloading_dictionary = {}
 
     

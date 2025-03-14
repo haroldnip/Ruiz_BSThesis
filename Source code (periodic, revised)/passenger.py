@@ -25,6 +25,9 @@ class Passenger:
         self.just_boarded_once = None
         self.overshot_destination = None
         self.informed_the_driver = False
+        self.about_to_cross_edge = None
+        self.data = {"id": self.passenger_id, "destination":self.destination_stop}
+        self.let_me_out = None
 
     def board_vehicle(self, vehicle, current_time):
         """This logic decides if the passenger boards the vehicle if all the conditions are satisifed:
@@ -34,8 +37,13 @@ class Passenger:
         self.jeep_boarding_time = current_time
         self.riding_status = "chilling"
         self.sidewalk_position = None
-        self.sidewalk.stops[self.destination_stop.position][0].unloading_list.append(self)
+        stop = self.sidewalk.stops[self.destination_stop.position][0]
+        stop.unloading_dictionary[self.passenger_id] = self.data
+        stop.unloading_list.append(self)
+        vehicle.passengers_on_board[self.passenger_id] = self.data
+        print(f"Passenger {self.passenger_id} is in the stop : {self.sidewalk.stops[self.destination_stop.position]}")
         print(f"Passenger {self.passenger_id} boarded {vehicle.vehicle_type} {vehicle.vehicle_id} from loading list {self.sidewalk.stops[self.destination_stop.position][0].loading_list}. ")
+        print(f"Passenger {self.passenger_id} is in {vehicle.vehicle_type} {vehicle.vehicle_id}, and in the unloading list {self.sidewalk.stops[self.destination_stop.position][0].unloading_list}. ")
         #self.sidewalk.stops[self.destination_stop.position][0].loading_list.remove(self) - not needed since pop automatically removes the passenger from the loading list
         self.passenger_simulator.waiting_passengers.remove(self)
         self.passenger_simulator.in_transit_passengers.append(self)
@@ -55,8 +63,12 @@ class Passenger:
         self.sidewalk_position = None
         print(f"Passenger {self.passenger_id}'s destination stop is {self.destination_stop}.")
         print(f"The destination stops by the vehicle is {vehicle.destination_stops}.")
+        print(f"Passenger {self.passenger_id} just boarded??? --- {self.just_boarded} (Should be False)")
         vehicle.destination_stops.remove(self.destination_stop)
-        self.sidewalk.stops[self.destination_stop.position][0].unloading_list.remove(self)
+        stop = self.sidewalk.stops[self.destination_stop.position][0]
+        stop.unloading_dictionary.pop(self.passenger_id, None)
+        stop.unloading_list.remove(self)
+        vehicle.passengers_on_board.pop(self.passenger_id, None)
         self.passenger_simulator.in_transit_passengers.remove(self)
         self.passenger_simulator.alighted_passengers.append(self)
         print(f"Passenger {self.passenger_id} alighted the jeepney.")
@@ -79,12 +91,13 @@ class Passenger:
                 pass
             else:
                 vehicle.determine_cross_edge()
+                vehicle.determine_if_about_to_cross_edge()
                 if vehicle.did_cross_edge:
                     self.edge_crossings += 1
                     self.determine_edge_crossing_at_start(vehicle)
                     print(f"Passenger {self.passenger_id} just crossed the edge. The edge crossings = {self.edge_crossings}.")
-                # if vehicle.about_to_cross_edge:
-                #     self.about_to_cross_edge = True
+                if vehicle.about_to_cross_edge:
+                    self.about_to_cross_edge = True
                     # print(f"Passenger {self.passenger_id} about to cross edge. The edge crossings = {self.edge_crossings}.")
         return
 
@@ -138,8 +151,23 @@ class Passenger:
     def determine_if_overshot_destination(self, vehicle):
         if self.overshot_destination or self.edge_crossings == 0:
             return
-        if self.edge_crossings == 1:
-            if vehicle.overshot_destination:
-                if self.destination_stop in (vehicle.previous_stop_list_adjacent or vehicle.previous_stop_list_ahead):
-                    self.overshot_destination = True
+        if self.let_me_out:
+            previous_rear = vehicle.previous_rear_bumper_position
+            current_rear = vehicle.rear_bumper_position
+            destination = self.destination_stop.position
+
+            # Check if the vehicle moved past the destination, considering periodic boundaries
+            if previous_rear <= destination < current_rear or (current_rear < previous_rear and (destination >= previous_rear or destination < current_rear)):
+                self.overshot_destination = True
+                print(f"Passenger {self.passenger_id} has overshot their destination at {destination}. Edge crossings --- {self.edge_crossings}")
+        return
+
+    def determine_if_let_me_out(self, vehicle):
+        """This function determines if the passenger needs to alight the vehicle already"""
+        if self.let_me_out:
+            print(f"Passenger {self.passenger_id} want to get out, its destination is at {self.destination_stop.position}. Overshot destination??? -- {self.overshot_destination}")
+            return
+        if (self.destination_stop in vehicle.destination_stops) and (self.destination_stop in vehicle.stop_list_adjacent_and_ahead) and (self.about_to_cross_edge or self.edge_crossings == 1):
+            self.let_me_out = True
+            print(f"Passenger {self.passenger_id} want to get outt, its destination is at {self.destination_stop.position}.  Overshot destination??? -- {self.overshot_destination}")
         return
