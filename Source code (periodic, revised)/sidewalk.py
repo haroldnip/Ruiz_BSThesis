@@ -25,11 +25,11 @@ class Sidewalk:
         """Freeze sidewalk cells while a vehicle is loading passengers"""
         for pos in road_positions:
             self.frozen_cells[pos] = True #Mark sidewalk cell as frozen
-            print(f"Sidewalk cell {pos} freezing status is {self.frozen_cells[pos]}")
+            # print(f"Sidewalk cell {pos} freezing status is {self.frozen_cells[pos]}")
 
     def unfreeze_cells(self, road_positions):
         """Unfreeze sidewalk cells after loading is done"""
         for pos in road_positions:
             self.frozen_cells[pos] = False #Mark sidewalk cell as unfrozen
-            print(f"Sidewalk cell {pos} freezing status is {self.frozen_cells[pos]}")
+            # print(f"Sidewalk cell {pos} freezing status is {self.frozen_cells[pos]}")
             

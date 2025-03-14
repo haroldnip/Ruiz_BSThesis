@@ -57,8 +57,9 @@ class IntegratedSimulator:
                 vehicle.accelerate()
                 vehicle.lane_changing()
                 vehicle.decelerate()
-                vehicle.unloading(timestep)
-                vehicle.loading(timestep)
+                if vehicle.vehicle_type == "jeep":
+                    vehicle.unloading(timestep)
+                    vehicle.loading(timestep)
                 vehicle.random_slowdown()
                 vehicle.move() #Move the vehicle
                 self.inform_driver_of_destination(vehicle)
@@ -66,8 +67,9 @@ class IntegratedSimulator:
             else:
                 vehicle.accelerate() 
                 vehicle.decelerate() 
-                vehicle.unloading(timestep)
-                vehicle.loading(timestep)
+                if vehicle.vehicle_type == "jeep":
+                    vehicle.unloading(timestep)
+                    vehicle.loading(timestep)
                 vehicle.random_slowdown()
                 vehicle.move()
                 self.inform_driver_of_destination(vehicle)
@@ -76,7 +78,7 @@ class IntegratedSimulator:
             vehicle.temporal_speeds.append(vehicle.speed)
             self.pedestrian_simulator.update_occupancy(timestep)
             self.vehicle_simulator.update_occupancy(timestep)
-            print(f"Passenger destinations of {vehicle.vehicle_type} {vehicle.vehicle_id} are {vehicle.destination_stops}")
+            #print(f"Passenger destinations of {vehicle.vehicle_type} {vehicle.vehicle_id} are {vehicle.destination_stops}")
             # Count vehicles passing through the monitored position (e.g., position 99)
             if timestep > transient_time:
                 self.counter.count_vehicle(vehicle)
@@ -106,11 +108,11 @@ class IntegratedSimulator:
             if passenger.informed_the_driver:
                 continue
             passenger.determine_if_just_boarded(vehicle)
-            print(f"Passenger {passenger.passenger_id} just boarded??? --- {passenger.just_boarded}")
+            #print(f"Passenger {passenger.passenger_id} just boarded??? --- {passenger.just_boarded}")
             if passenger.just_boarded is False:
                 vehicle.destination_stops.append(passenger.destination_stop)
                 passenger.informed_the_driver = True
-                print(f"Passenger {passenger.passenger_id} informed the driver that his destination is at {passenger.destination_stop}.")
+                #print(f"Passenger {passenger.passenger_id} informed the driver that his destination is at {passenger.destination_stop}.")
         return
 
     def calculate_riding_time(self, timestep):

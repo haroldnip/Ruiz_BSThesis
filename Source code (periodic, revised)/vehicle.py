@@ -146,7 +146,7 @@ class Vehicle:
                     self.stop_list_ahead.append(stop_checked)
                 else:
                     self.stop_list_ahead.append(False)  # Indicate no stop found
-        print(f"The stop positions are {[stop.position for stop in (self.stop_list_adjacent + self.stop_list_ahead) if stop]}")
+        #print(f"The stop positions are {[stop.position for stop in (self.stop_list_adjacent + self.stop_list_ahead) if stop]}")
 
 
     def detect_passengers_adjacent_and_ahead(self):
@@ -186,10 +186,10 @@ class Vehicle:
             target_row = 0
             # print(f"{self.vehicle_type} {self.vehicle_id} will try lane changing to the right lane")
             if self.lane_change_trials_for_passengers >= 4:
-                print(f"{self.vehicle_type} {self.vehicle_id} has attempted lane changing 4 times.")
+                #print(f"{self.vehicle_type} {self.vehicle_id} has attempted lane changing 4 times.")
                 return
             else:
-                print(f"{self.vehicle_type} {self.vehicle_id} has tried lane changing {self.lane_change_trials_for_passengers} times.")
+                #print(f"{self.vehicle_type} {self.vehicle_id} has tried lane changing {self.lane_change_trials_for_passengers} times.")
                 if self.is_lane_change_allowed(target_row):
                     # print(f"Lane change on row {target_row} is allowed. Will try doing so.")
                     self.lane_change_direction = "right"
@@ -200,7 +200,7 @@ class Vehicle:
                         self.begin_straddling(-1)  # Initiates lane change
                     if self.current_row == 2:
                         self.lane_change_trials_for_passengers += 1
-                        print(f"{self.vehicle_type} {self.vehicle_id} has tried lane changing {self.lane_change_trials_for_passengers} times (incremented).")
+                        #print(f"{self.vehicle_type} {self.vehicle_id} has tried lane changing {self.lane_change_trials_for_passengers} times (incremented).")
                         return
     
 
@@ -316,20 +316,7 @@ class Vehicle:
     def determine_if_overshot_destination(self):
         """Determines whether at least one passenger in the vehicle has overshot their destination."""
         self.overshot_destination = any(passenger.overshot_destination for passenger in self.passengers_within_vehicle)
-        # """Checks if the vehicle has moved past any destination stop."""
-        # self.stop_list_adjacent_and_ahead = self.stop_list_adjacent+self.stop_list_ahead
-        # for destination in self.destination_stops:
-        #     if destination in self.previous_stop_list_ahead and \
-        #     destination not in self.stop_list_adjacent_and_ahead:
-        #         self.overshot_destination = True
-        #         print(f"{self.vehicle_type} {self.vehicle_id} overshot passenger destination.")
-        #     elif self.previous_speed > self.safe_stopping_speed and (destination in self.previous_stop_list_adjacent or destination in self.previous_stop_list_ahead) \
-        #     and destination not in self.stop_list_adjacent_and_ahead:
-        #         self.overshot_destination = True
-        #         print(f"{self.vehicle_type} {self.vehicle_id} overshot passenger destination.")
-        #     else:
-        #         self.overshot_destination = False
-        #         return  
+
 
     def calculate_nearest_destination_distance(self): #This is not final, I stopped right here (Feb. 13, 2025, 9:26 PM)
         """This method is triggered only if the destination of the passenger is within sight.
@@ -338,7 +325,7 @@ class Vehicle:
         #self.update_pool_of_occupied_positions()
         self.determine_if_overshot_destination()
         if self.overshot_destination:
-            print(f"{self.vehicle_type} {self.vehicle_id} has overshot a passenger destination")
+            #print(f"{self.vehicle_type} {self.vehicle_id} has overshot a passenger destination")
             return 0
 
         road_length = self.road_designation.length
@@ -353,19 +340,19 @@ class Vehicle:
             # print(f"A passenger destination is {destination.position}")
         for destination_stop in self.destination_stops:
             destination_occupancy[destination_stop.position] = 1 # Mark stops
-            print(f"{self.vehicle_type} {self.vehicle_id}: {destination_stop}'s position is {destination_stop.position}.")
+            # print(f"{self.vehicle_type} {self.vehicle_id}: {destination_stop}'s position is {destination_stop.position}.")
         
         #Roll the array so the rear bumper is at index 0
         rolled_destinations = np.roll(destination_occupancy, -(vehicle_rear))
-        print(f"{self.vehicle_type} {self.vehicle_id} sees the destination occupancy {rolled_destinations}")
+        # print(f"{self.vehicle_type} {self.vehicle_id} sees the destination occupancy {rolled_destinations}")
         # print(f"{self.vehicle_type} {self.vehicle_id} sees rolled destination: {rolled_destinations}")
         #Find the first nonzero index (or the nearest stop)
         search_range = rolled_destinations[1:look_ahead_distance+1]
         if np.any(search_range > 0):  # If there's at least one nonzero value
-            print("there's at least one nonzero value")
+            # print("there's at least one nonzero value")
             nearest_index = np.argmax(search_range > 0)  # First nonzero index
         else:
-            print("No valid destination found")
+            # print("No valid destination found")
             nearest_index = np.inf  # No valid destination found
 
         return max(0, nearest_index-1) if nearest_index != np.inf else np.inf
@@ -374,11 +361,11 @@ class Vehicle:
     def decelerate(self):
         """Decelerate to prevent collisions, load passengers, or unload passengers"""
         nearest_destination_distance = self.calculate_nearest_destination_distance() #if overshot, automatically 0. If not, calculate based on distance from front bumper
-        print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_destination_distance} cells away from the nearest destination.")
+        # print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_destination_distance} cells away from the nearest destination.")
         nearest_pedestrian_distance = self.pedestrian_headway() #if adjacent to vehicle 0, if not, calculate based on distance from front bumper
-        print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_pedestrian_distance} cells away from the nearest pedestrian.")
+        # print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_pedestrian_distance} cells away from the nearest pedestrian.")
         nearest_vehicle_distance = self.gap_distance(self.current_row) #gap distance in own lane
-        print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_vehicle_distance} cells away from the nearest vehicle.")
+        # print(f" {self.vehicle_type} {self.vehicle_id} is {nearest_vehicle_distance} cells away from the nearest vehicle.")
         
         if self.vehicle_type == "jeep":
         #determine minimum distance to decelerate
@@ -426,7 +413,7 @@ class Vehicle:
         """Check if any occupied position has a matching alighting stop in passenger destinations."""        
         
         self.matching_stop_found = False  
-        print(f"Matching_stops_on_sidewalk: {self.vehicle_type} {self.vehicle_id}'s adjacent stops are {self.stop_list_adjacent}")
+        # print(f"Matching_stops_on_sidewalk: {self.vehicle_type} {self.vehicle_id}'s adjacent stops are {self.stop_list_adjacent}")
         
         for stop in self.stop_list_adjacent:  # Iterate over adjacent stops
             stop_list = self.sidewalk.stops[stop.position]  # This is a list of Stop objects
@@ -436,7 +423,7 @@ class Vehicle:
                 for passenger_id in stop.unloading_dictionary.keys():
                     if passenger_id in self.passengers_on_board:  # Match with passengers inside vehicle
                         self.matching_stop_found = True
-                        print(f"{self.vehicle_type} {self.vehicle_id} found a matching stop at {stop.position} for passenger {passenger_id}")
+                        # print(f"{self.vehicle_type} {self.vehicle_id} found a matching stop at {stop.position} for passenger {passenger_id}")
                         return  # Exit early if match found
 
         return  # No match found
@@ -471,9 +458,9 @@ class Vehicle:
         """Unload passengers only if their stop matches one of the occupied positions of the vehicle."""
         for passenger in self.passengers_within_vehicle:
             # passenger.determine_if_overshot_destination(self)
-            print(f"Passenger {passenger.passenger_id}'s edge crossings is {passenger.edge_crossings}.")
+            # print(f"Passenger {passenger.passenger_id}'s edge crossings is {passenger.edge_crossings}.")
             if passenger.edge_crossings == 1 or passenger.about_to_cross_edge:
-                print(f"Calling unload passenger {passenger.passenger_id} method. Overshot destination?? --- {passenger.overshot_destination}")
+                # print(f"Calling unload passenger {passenger.passenger_id} method. Overshot destination?? --- {passenger.overshot_destination}")
                 if passenger.overshot_destination:
                     self.release_passenger(passenger, current_time)             
                     self.passengers_served += 1
@@ -483,11 +470,11 @@ class Vehicle:
                     if self.passengers_served > 0:
                         return 
                 for stop in self.stop_list_adjacent:
-                    #print(f"The unloading list of {stop} is {stop.unloading_list}")
+                    # print(f"The unloading list of {stop} is {stop.unloading_list}")
                     #self.update_pool_of_occupied_positions()
                     #(f"Passenger {passenger.passenger_id} is checking the stop {stop.position} and its unloading list {stop.unloading_list}")
                     if passenger in stop.unloading_list and passenger.let_me_out: #Anticipates that chance of evenly-spaced stops
-                        print(f"Passenger {passenger.passenger_id}'s destination is adjacent to the {self.vehicle_type} {self.vehicle_id} and the passenger is in the unloading list.")
+                        # print(f"Passenger {passenger.passenger_id}'s destination is adjacent to the {self.vehicle_type} {self.vehicle_id} and the passenger is in the unloading list.")
                         self.release_passenger(passenger, current_time)             
                         self.passengers_served += 1
                         # Track unloading from the far lane
@@ -501,17 +488,17 @@ class Vehicle:
     def unloading(self, current_time): #Deceleration and lane changing of vehicle was already handled
         """This method handles unloading of passengers, assuming lane changing and deceleration for them have been implemented previously"""
         if self.vehicle_type == "jeep":
-            print(f"{self.vehicle_type} {self.vehicle_id}: Unload Passengers? --- {self.will_unload_passengers()}.")
+            # print(f"{self.vehicle_type} {self.vehicle_id}: Unload Passengers? --- {self.will_unload_passengers()}.")
             
             if (self.will_unload_passengers() or self.overshot_destination) and self.speed == 0:
-                print(f"{self.vehicle_type} {self.vehicle_id} stopped and will unload passengers.")
+                # print(f"{self.vehicle_type} {self.vehicle_id} stopped and will unload passengers.")
                 self.matching_stops_on_sidewalk()
                 if self.matching_stop_found or self.overshot_destination:
-                    print(f"{self.vehicle_type} {self.vehicle_id} should now be at stop because the destination is either adjacent to the vehicle or overshot by it.")
+                    # print(f"{self.vehicle_type} {self.vehicle_id} should now be at stop because the destination is either adjacent to the vehicle or overshot by it.")
                     if self.current_row == 0: #The deceleration method stops the vehicle to v = 0 if needed
                         self.unload_passengers(current_time)               
                     elif self.current_row == 2:
-                        print(f"{self.vehicle_type} {self.vehicle_id} has tried lane changing {self.lane_change_trials_for_passengers}")
+                        # print(f"{self.vehicle_type} {self.vehicle_id} has tried lane changing {self.lane_change_trials_for_passengers}")
                         if self.lane_change_trials_for_passengers >= 4: #Unloading from the far lane
                             self.unload_passengers(current_time)
                         else:
@@ -580,13 +567,13 @@ class Vehicle:
 
                     if sidewalk_cell == 0 or len(passenger_list) == 0:
                         index += 1
-                        print(f"{self.vehicle_type} {self.vehicle_id} detected no passengers, we shift to position {index}.")
+                        # print(f"{self.vehicle_type} {self.vehicle_id} detected no passengers, we shift to position {index}.")
                         continue
 
                     if self.current_row == 0:
                         # print(f"{self.vehicle_type} {self.vehicle_id}is at the nearer lane.")
                         if self.speed == 0:
-                            print(f" {self.vehicle_type} {self.vehicle_id} stopped to load passengers.")
+                            # print(f" {self.vehicle_type} {self.vehicle_id} stopped to load passengers.")
                             loaded_passengers += self.load_passengers(sidewalk_cell, passenger_list, current_time)
                             self.occupied_seats = len(self.passengers_within_vehicle)
                             if self.occupied_seats >= self.capacity:
@@ -594,7 +581,7 @@ class Vehicle:
                     elif self.current_row == 2:
                         if self.lane_change_trials_for_passengers >= 4:
                             if self.speed == 0:
-                                print(f" {self.vehicle_type} {self.vehicle_id} stopped at the far lane to load passengers.")
+                                # print(f" {self.vehicle_type} {self.vehicle_id} stopped at the far lane to load passengers.")
                                 loaded_passengers += self.load_passengers(sidewalk_cell, passenger_list, current_time)
                                 #self.lane_change_trials_for_passengers = 0
                                 self.occupied_seats = len(self.passengers_within_vehicle)
@@ -607,11 +594,11 @@ class Vehicle:
                     index += 1
                 # Unfreeze sidewalk cells once loading is complete
                 if len(self.last_loading_position)>0 and all(self.sidewalk.occupancy[position] == 0 for position in self.last_loading_position):
-                    print(f"{self.vehicle_type} {self.vehicle_id} last loading position is {self.last_loading_position}.")
+                    # print(f"{self.vehicle_type} {self.vehicle_id} last loading position is {self.last_loading_position}.")
                     rolled_sidewalk_occupancy = np.roll(self.sidewalk.occupancy, -self.last_loading_position[0])
                     if self.speed > 0 or (np.sum(rolled_sidewalk_occupancy[0:self.length]==0)):
                         self.sidewalk.unfreeze_cells(self.last_loading_position)
-                print(f"Loaded {loaded_passengers} passengers. Current passengers: {len(self.passengers_within_vehicle)} ")
+                # print(f"Loaded {loaded_passengers} passengers. Current passengers: {len(self.passengers_within_vehicle)} ")
         return
 
     def random_slowdown(self):
@@ -625,7 +612,7 @@ class Vehicle:
         #Did the vehicle just crossed the edge? (After crossing)
         if self.previous_rear_bumper_position > self.rear_bumper_position:
             self.did_cross_edge = True
-            print(f"{self.vehicle_type} {self.vehicle_id} has crossed edge.")
+            #print(f"{self.vehicle_type} {self.vehicle_id} has crossed edge.")
         else:
             self.did_cross_edge = False
 
@@ -647,7 +634,7 @@ class Vehicle:
         self.front_bumper_position = new_position + self.length - 1
         self.next_rear_bumper_position = new_position + self.speed
         self.next_front_bumper_position = self.next_rear_bumper_position + self.length - 1
-        print(f"Vehicle {self.vehicle_id}'s previous position is {self.previous_rear_bumper_position}, right now its current position is {self.rear_bumper_position}. Based on its speed, it aims to move to {self.next_rear_bumper_position}.")
+        #print(f"Vehicle {self.vehicle_id}'s previous position is {self.previous_rear_bumper_position}, right now its current position is {self.rear_bumper_position}. Based on its speed, it aims to move to {self.next_rear_bumper_position}.")
         self.determine_cross_edge()
         # self.determine_if_about_to_cross_edge()
         self.update_pool_of_occupied_positions()
