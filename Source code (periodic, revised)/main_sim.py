@@ -48,47 +48,48 @@ class IntegratedSimulator:
         np.random.shuffle(self.vehicle_simulator.vehicles)
         np.random.shuffle(self.pedestrian_simulator.passengers)
         
-        for vehicle in self.vehicle_simulator.vehicles:
-            if vehicle.current_row == 1: # We  dont have to check for speed because vehicles cannot straddle if their v = 0
-                vehicle.finish_lane_change()
-                self.inform_driver_of_destination(vehicle)
+        if len(self.vehicle_simulator.vehicles) > 0:
+            for vehicle in self.vehicle_simulator.vehicles:
+                if vehicle.current_row == 1: # We  dont have to check for speed because vehicles cannot straddle if their v = 0
+                    vehicle.finish_lane_change()
+                    self.inform_driver_of_destination(vehicle)
 
-            elif np.random.rand() < vehicle.lane_changing_prob:
-                vehicle.accelerate()
-                vehicle.lane_changing()
-                vehicle.decelerate()
-                if vehicle.vehicle_type == "jeep":
-                    vehicle.unloading(timestep)
-                    vehicle.loading(timestep)
-                vehicle.random_slowdown()
-                vehicle.move() #Move the vehicle
-                self.inform_driver_of_destination(vehicle)
-        
-            else:
-                vehicle.accelerate() 
-                vehicle.decelerate() 
-                if vehicle.vehicle_type == "jeep":
-                    vehicle.unloading(timestep)
-                    vehicle.loading(timestep)
-                vehicle.random_slowdown()
-                vehicle.move()
-                self.inform_driver_of_destination(vehicle)
-            for passenger in vehicle.passengers_within_vehicle:
-                passenger.determine_if_overshot_destination(vehicle)
-            vehicle.temporal_speeds.append(vehicle.speed)
-            self.pedestrian_simulator.update_occupancy(timestep)
-            self.vehicle_simulator.update_occupancy(timestep)
-            #print(f"Passenger destinations of {vehicle.vehicle_type} {vehicle.vehicle_id} are {vehicle.destination_stops}")
-            # Count vehicles passing through the monitored position (e.g., position 99)
-            if timestep > transient_time:
-                self.counter.count_vehicle(vehicle)
-                self.counter.count_passenger(vehicle)
-                self.counter.count_jeeps(vehicle)
-                self.counter.count_trucks(vehicle)
-
-        for passenger_list in self.pedestrian_simulator.sidewalk.passengers:
-            for passenger in passenger_list:
+                elif np.random.rand() < vehicle.lane_changing_prob:
+                    vehicle.accelerate()
+                    vehicle.lane_changing()
+                    vehicle.decelerate()
+                    if vehicle.vehicle_type == "jeep":
+                        vehicle.unloading(timestep)
+                        vehicle.loading(timestep)
+                    vehicle.random_slowdown()
+                    vehicle.move() #Move the vehicle
+                    self.inform_driver_of_destination(vehicle)
+            
+                else:
+                    vehicle.accelerate() 
+                    vehicle.decelerate() 
+                    if vehicle.vehicle_type == "jeep":
+                        vehicle.unloading(timestep)
+                        vehicle.loading(timestep)
+                    vehicle.random_slowdown()
+                    vehicle.move()
+                    self.inform_driver_of_destination(vehicle)
+                for passenger in vehicle.passengers_within_vehicle:
+                    passenger.determine_if_overshot_destination(vehicle)
+                vehicle.temporal_speeds.append(vehicle.speed)
                 self.pedestrian_simulator.update_occupancy(timestep)
+                self.vehicle_simulator.update_occupancy(timestep)
+                #print(f"Passenger destinations of {vehicle.vehicle_type} {vehicle.vehicle_id} are {vehicle.destination_stops}")
+                # Count vehicles passing through the monitored position (e.g., position 99)
+                if timestep > transient_time:
+                    self.counter.count_vehicle(vehicle)
+                    self.counter.count_passenger(vehicle)
+                    self.counter.count_jeeps(vehicle)
+                    self.counter.count_trucks(vehicle)
+
+        # for passenger_list in self.pedestrian_simulator.sidewalk.passengers:
+        #     for passenger in passenger_list:
+        #         self.pedestrian_simulator.update_occupancy(timestep)
 
                 #Collect individual speeds of vehicles per timestep (To compute the spatial mean speed per timestep)
         if timestep >= transient_time:
@@ -100,6 +101,12 @@ class IntegratedSimulator:
 
             self.vehicle_simulator.occupancy_history.append((timestep, self.vehicle_simulator.road.occupancy.copy()))
             self.pedestrian_simulator.sidewalk_occupancy_history.append((timestep, self.pedestrian_simulator.sidewalk.occupancy.copy()))
+
+        for stop in self.pedestrian_simulator.sidewalk.stops:
+            if stop:
+                stop_interest = stop[0]
+                #print(f"For Stop at {stop_interest.position}, the loading list is {stop_interest.loading_list} with {len(stop_interest.loading_list)} elements.")
+                pass
     #Compute riding times once, not everytime step. Just compute it at the end.
 
     def inform_driver_of_destination(self, vehicle):
@@ -150,10 +157,10 @@ class IntegratedSimulator:
         while timestep < max_timesteps:
             # Update both simulators at each timestep
             if timestep < transient_time:
+                #print(f"Implementing rules for timestep {timestep}")
                 self.current_time = timestep
                 self.pedestrian_simulator.current_time = timestep
                 self.vehicle_simulator.current_time = timestep
-                #print(f"Implementing rules for timestep {timestep}")
                 
                 self.pedestrian_simulator.generate_passengers(self.vehicle_simulator, timestep)
                 self.populate_the_road(jeep_lane_change_prob, truck_lane_change_prob, self.pedestrian_simulator.sidewalk, timestep, transient_time, stop_to_stop_distance, safe_stopping_speed, safe_deceleration, jeepney_allowed_rows, truck_allowed_rows)  # Update vehicles
@@ -162,7 +169,7 @@ class IntegratedSimulator:
 
             # Collect data after transient period
             else: #timestep >= transient_time:
-                print(f"Implementing rules for timestep {timestep}")
+                #print(f"Implementing rules for timestep {timestep}")
                 self.current_time = timestep
                 self.pedestrian_simulator.current_time = timestep
                 self.vehicle_simulator.current_time = timestep
@@ -187,7 +194,7 @@ class IntegratedSimulator:
                 self.truck_throughput = self.counter.calculate_truck_throughput()
                 self.actual_density = (self.vehicle_simulator.spawned_vehicles_occupancy) / (self.vehicle_simulator.road.length * self.vehicle_simulator.road.width)
                 self.actual_truck_fraction = self.vehicle_simulator.spawned_trucks / self.vehicle_simulator.spawned_vehicles
-                self.actual_truck_occupancy_fraction = (self.vehicle_simulator.spawned_trucks*14)/ (self.vehicle_simulator.road.length * self.vehicle_simulator.road.width)
+                self.actual_truck_occupancy_fraction = (self.vehicle_simulator.spawned_trucks*14)/ ((self.vehicle_simulator.spawned_trucks*14)+(self.vehicle_simulator.spawned_jeeps*6))
                 vehicle_spatial_mean_speed = np.mean(self.vehicle_spatial_speeds)
                 jeep_spatial_mean_speed = np.mean(self.jeep_spatial_speeds)
                 truck_spatial_mean_speed = np.mean(self.truck_spatial_speeds)
@@ -239,6 +246,9 @@ class IntegratedSimulator:
             # if (passenger.jeep_boarding_time > transient_time and passenger.arrived_at_destination_time > transient_time):
             riding_time = passenger.riding_time
             waiting_time = passenger.waiting_time
+            spawning_time = passenger.sidewalk_entry_time
+            boarding_time = passenger.jeep_boarding_time
+            alighting_time = passenger.arrived_at_destination_time
             if passenger in self.pedestrian_simulator.waiting_passengers:
                 status = "Waiting"
             elif passenger in self.pedestrian_simulator.in_transit_passengers:
@@ -252,7 +262,10 @@ class IntegratedSimulator:
                 "Passenger ID": passenger.passenger_id,
                 "Riding Time": riding_time,
                 "Waiting Time": waiting_time,
-                "Riding Status":status})
+                "Riding Status":status,
+                "Spawning Time": spawning_time,
+                "Boarding Time": boarding_time,
+                "Alighting Time": alighting_time})
                 #"Passenger Travel Speed":passenger_travel_speed})
 
         #Collect vehicle data

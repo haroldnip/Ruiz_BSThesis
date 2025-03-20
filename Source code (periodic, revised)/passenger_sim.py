@@ -35,9 +35,13 @@ class Passenger_Simulator:
         # Reset the sidewalk occupancy matrix to zeros
         self.sidewalk.occupancy.fill(0)                 
         for x_position in range(self.sidewalk.length):
-            number_of_passengers_present = len(self.sidewalk.stops[x_position][0].loading_list)
-            # print(f"The number of passengers present at position {x_position} is {number_of_passengers_present}.")
-            self.sidewalk.occupancy[x_position] = number_of_passengers_present        # Count passengers for each cell
+            if self.sidewalk.stops[x_position]: 
+                number_of_passengers_present = len(self.sidewalk.stops[x_position][0].loading_list)
+                # print(f"The number of passengers present at position {x_position} is {number_of_passengers_present}.")
+            else:
+                number_of_passengers_present = 0
+            
+            self.sidewalk.occupancy[x_position] = number_of_passengers_present # Count passenger each cell
         # print(f"Hence, sidewalk occupancy is {self.sidewalk.occupancy}.")
         #self.sidewalk_occupancy_history.append(self.sidewalk.occupancy.copy())
 
@@ -61,12 +65,12 @@ class Passenger_Simulator:
             #print(f"The stops at position {position} is {self.sidewalk.boarding_stops[position]}")
             if len(self.sidewalk.stops[position]) != 0: #We spawn passengers on sidewalk cells with designated stops only (Here, we check for the presence of a stop)
                 
-                if self.sidewalk.frozen_cells[position]:# **Skip frozen cells**
-                    continue
+                # if self.sidewalk.frozen_cells[position]:# **Skip frozen cells**
+                #     print(f"Sidewalk position {position} skipped, frozen.")
+                #     continue
                 
                 if np.random.random() < self.passenger_arrival_rate:
                     if self.sidewalk.occupancy[position, 0] < self.sidewalk.max_passengers_per_cell:
-                        distance_within_sight_param = 4
                         destination = None 
                         set_of_stops = self.sidewalk.stops
                         
@@ -77,7 +81,7 @@ class Passenger_Simulator:
 
                         # print(f"The destination position for the passenger initiated at position {position} is {position}")
                         new_passenger = Passenger(current_time_pass, self.sidewalk, 
-                        self.road_designation, position, distance_within_sight_param, 
+                        self.road_designation, position, 
                         destination, vehicle_simulator, self)
                         # print(f"Passenger {new_passenger.passenger_id}'s destinations at {new_passenger.destination_stop}")
                         self.passengers.append(new_passenger)
@@ -88,7 +92,7 @@ class Passenger_Simulator:
                         # print(f"Passenger {new_passenger.passenger_id} is added to Stop at {self.sidewalk.stops[position][0].position}. The loading list is {self.sidewalk.stops[position][0].loading_list}.")
                         self.waiting_passengers.append(new_passenger)
                         self.update_occupancy(self.current_time)
-                        #print(f"Passenger added at position {col}.")
+                        #print(f"Passenger added at position {position}.")
                         #print(f"Passenger {new_passenger.passenger_id} was added to position {position}, where the destination is at {destination_position}.")
         # print(f"Time {self.current_time}: {len(self.passengers)} passengers generated.")
 

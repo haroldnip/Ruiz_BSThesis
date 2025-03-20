@@ -2,7 +2,7 @@ import numpy as np
 
 class Passenger:
     _id_counter = 0
-    def __init__(self, sidewalk_entry_time, sidewalk, road_designation, sidewalk_position, distance_within_sight, destination_stop, vehicle_simulator, passenger_simulator):
+    def __init__(self, sidewalk_entry_time, sidewalk, road_designation, sidewalk_position, destination_stop, vehicle_simulator, passenger_simulator):
         self.passenger_id = Passenger._id_counter #identifying number of each passenger
         Passenger._id_counter += 1 #increment passenger id based on order of initialization
         self.sidewalk_entry_time = sidewalk_entry_time #The time where the passenger spawned on the sidewalk

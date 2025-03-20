@@ -56,6 +56,8 @@ class Vehicle:
         self.previous_speed = None
         self.previous_front_bumper_position = None
         self.passengers_on_board = {} #Dictionary for unloading purposes
+        # self.active_loading_list = []
+        # self.queue_loading_list = []
 
     def accelerate(self):
         """Increases vehicle's speed by 1 cell, up to the maximum speed"""
@@ -99,7 +101,7 @@ class Vehicle:
     def begin_straddling(self, direction):
         """This method executes the actual action of changing lanes (in particular, this methods let the vehicle begin straddling)
             This method assumes that the occupancy on the lane of interest was already checked."""
-        self.speed = self.gap_distance(self.current_row)
+        self.speed = max(0, self.gap_distance(self.current_row)-1)
         
         if self.speed == 0:
             self.accelerate()
@@ -415,16 +417,17 @@ class Vehicle:
         self.matching_stop_found = False  
         # print(f"Matching_stops_on_sidewalk: {self.vehicle_type} {self.vehicle_id}'s adjacent stops are {self.stop_list_adjacent}")
         
-        for stop in self.stop_list_adjacent:  # Iterate over adjacent stops
-            stop_list = self.sidewalk.stops[stop.position]  # This is a list of Stop objects
-            stop_concerned = stop_list[0] if stop_list else None  # Get the first Stop if available
+        for stop in self.stop_list_adjacent:  # Iterate over adjacent stops\
+            if stop:
+                stop_list = self.sidewalk.stops[stop.position]  # This is a list of Stop objects
+                stop_concerned = stop_list[0] if stop_list else None  # Get the first Stop if available
 
-            if stop_concerned and stop.unloading_dictionary:  # Check if stop exists and has passengers
-                for passenger_id in stop.unloading_dictionary.keys():
-                    if passenger_id in self.passengers_on_board:  # Match with passengers inside vehicle
-                        self.matching_stop_found = True
-                        # print(f"{self.vehicle_type} {self.vehicle_id} found a matching stop at {stop.position} for passenger {passenger_id}")
-                        return  # Exit early if match found
+                if stop_concerned and stop.unloading_dictionary:  # Check if stop exists and has passengers
+                    for passenger_id in stop.unloading_dictionary.keys():
+                        if passenger_id in self.passengers_on_board:  # Match with passengers inside vehicle
+                            self.matching_stop_found = True
+                            # print(f"{self.vehicle_type} {self.vehicle_id} found a matching stop at {stop.position} for passenger {passenger_id}")
+                            return  # Exit early if match found
 
         return  # No match found
 
@@ -470,18 +473,19 @@ class Vehicle:
                     if self.passengers_served > 0:
                         return 
                 for stop in self.stop_list_adjacent:
-                    # print(f"The unloading list of {stop} is {stop.unloading_list}")
+                    if stop:
+                        # print(f"The unloading list of {stop} is {stop.unloading_list}")
                     #self.update_pool_of_occupied_positions()
                     #(f"Passenger {passenger.passenger_id} is checking the stop {stop.position} and its unloading list {stop.unloading_list}")
-                    if passenger in stop.unloading_list and passenger.let_me_out: #Anticipates that chance of evenly-spaced stops
-                        # print(f"Passenger {passenger.passenger_id}'s destination is adjacent to the {self.vehicle_type} {self.vehicle_id} and the passenger is in the unloading list.")
-                        self.release_passenger(passenger, current_time)             
-                        self.passengers_served += 1
-                        # Track unloading from the far lane
-                        if self.current_row == 2:
-                            self.far_lane_unloadings += 1
-                        if self.passengers_served > 0:
-                            return    
+                        if passenger in stop.unloading_list and passenger.let_me_out: #Anticipates that chance of evenly-spaced stops
+                            # print(f"Passenger {passenger.passenger_id}'s destination is adjacent to the {self.vehicle_type} {self.vehicle_id} and the passenger is in the unloading list.")
+                            self.release_passenger(passenger, current_time)             
+                            self.passengers_served += 1
+                            # Track unloading from the far lane
+                            if self.current_row == 2:
+                                self.far_lane_unloadings += 1
+                            if self.passengers_served > 0:
+                                return    
  
         return
 
@@ -550,11 +554,13 @@ class Vehicle:
                 index = start_index
                 road_length = self.road_designation.length
                 # Handle periodic boundary conditions
-                road_positions = [(i % road_length) for i in range(start_index, end_index)]
+                #road_positions = [(i % road_length) for i in range(start_index, end_index)]
 
                 # Freeze sidewalk cells during loading
                 if self.speed == 0:
-                    self.sidewalk.freeze_cells_for_loading(road_positions)
+                    
+                    pass
+                    #self.sidewalk.freeze_cells_for_loading(road_positions)
 
                 # print(f"{self.vehicle_type} {self.vehicle_id} detected passengers starting from {start_index} to {end_index}.")
                 loaded_passengers = 0
@@ -563,7 +569,12 @@ class Vehicle:
                     #print(f"{self.vehicle_type} {self.vehicle_id} is currently checking at {index}.")
                     road_cell = index % road_length
                     sidewalk_cell = self.get_adjacent_sidewalk_cell(road_cell)
-                    passenger_list = self.sidewalk.stops[road_cell][0].loading_list
+                    #passenger_list = self.sidewalk.stops[road_cell][0].loading_list
+                    if self.sidewalk.stops[road_cell]:  # Ensure the list is not empty
+                        passenger_list = self.sidewalk.stops[road_cell][0].loading_list
+                    else:
+                        passenger_list = []  # No passengers if no stop exists
+
 
                     if sidewalk_cell == 0 or len(passenger_list) == 0:
                         index += 1
@@ -593,12 +604,15 @@ class Vehicle:
                         break
                     index += 1
                 # Unfreeze sidewalk cells once loading is complete
-                if len(self.last_loading_position)>0 and all(self.sidewalk.occupancy[position] == 0 for position in self.last_loading_position):
-                    # print(f"{self.vehicle_type} {self.vehicle_id} last loading position is {self.last_loading_position}.")
-                    rolled_sidewalk_occupancy = np.roll(self.sidewalk.occupancy, -self.last_loading_position[0])
-                    if self.speed > 0 or (np.sum(rolled_sidewalk_occupancy[0:self.length]==0)):
-                        self.sidewalk.unfreeze_cells(self.last_loading_position)
-                # print(f"Loaded {loaded_passengers} passengers. Current passengers: {len(self.passengers_within_vehicle)} ")
+                # print(f"Unfreezing check for {self.vehicle_type} {self.vehicle_id}")
+                # if len(self.last_loading_position)>0 and (all(self.sidewalk.occupancy[position] == 0 for position in self.last_loading_position) or self.capacity == len(self.passengers_within_vehicle)):
+                #     print(f"{self.vehicle_type} {self.vehicle_id} last loading position is {self.last_loading_position}.")
+                #     print(f"Sidewalk occupancy at those positions: {[self.sidewalk.occupancy[pos] for pos in self.last_loading_position]}")
+                #     rolled_sidewalk_occupancy = np.roll(self.sidewalk.occupancy, -self.last_loading_position[0])
+                #     print(f"Vehicle speed: {self.speed}, Occupied seats: {len(self.passengers_within_vehicle)}/{self.capacity}")
+                #     if self.speed > 0 or (np.sum(rolled_sidewalk_occupancy[0:self.length]==0) or self.capacity == len(self.passengers_within_vehicle)):
+                #         self.sidewalk.unfreeze_cells(self.last_loading_position)
+                #print(f"Loaded {loaded_passengers} passengers. Current passengers: {len(self.passengers_within_vehicle)} ")
         return
 
     def random_slowdown(self):
