@@ -21,7 +21,7 @@ class IntegratedSimulator:
         self.actual_truck_occupancy_fraction = 0
 
 
-    def populate_the_road(self,  adjacent_sidewalk, timestep, transient_time, stop_to_stop_distance, safe_stopping_speed, safe_deceleration, jeepney_allowed_rows, truck_allowed_rows):
+    def populate_the_road(self,  adjacent_sidewalk, timestep, transient_time,  safe_stopping_speed, safe_deceleration, jeepney_allowed_rows, truck_allowed_rows):
         "This method makes sure all vehicles are spawned on the road"
         if (self.vehicle_simulator.spawned_vehicles < self.vehicle_simulator.total_vehicles) and (self.vehicle_simulator.unsuccessful_vehicle_placement_tries < (self.vehicle_simulator.total_vehicles*2)): #(self.vehicle_simulator.road.length/3)): #Feb 19 2025: The 2nd condition is too strict. #If not all vehicles have been spawned yet
             #Alternate between spawning trucks and jeeps
@@ -75,8 +75,8 @@ class IntegratedSimulator:
                     vehicle.move()
                     self.inform_driver_of_destination(vehicle)
                 for passenger in vehicle.passengers_within_vehicle:
-                    passenger.determine_if_overshot_destination(vehicle)   
-                if timestep >= transient_time:     
+                    passenger.determine_if_overshot_destination(vehicle)
+                if timestep >= transient_time:    
                     vehicle.temporal_speeds.append(vehicle.speed)
                 self.pedestrian_simulator.update_occupancy(timestep)
                 self.vehicle_simulator.update_occupancy(timestep)
@@ -136,7 +136,7 @@ class IntegratedSimulator:
         return
 
 
-    def run_simulation(self, max_timesteps,  transient_time, density, truck_fraction, stop_to_stop_distance, safe_stopping_speed, safe_deceleration, jeepney_allowed_rows, truck_allowed_rows, visualize=False):
+    def run_simulation(self, max_timesteps,  transient_time, density, truck_fraction,  safe_stopping_speed, safe_deceleration, jeepney_allowed_rows, truck_allowed_rows, visualize=False):
         timestep = 0
         # Initialize or reset relevant data
         self.vehicle_simulator.initialize_vehicles(density, truck_fraction)
@@ -148,9 +148,8 @@ class IntegratedSimulator:
         data_trucks = []
         data_spatio_temporal = None
         data_sidewalk_spatio_temporal = None
-        #data_temporal_speeds = []
 
-        self.pedestrian_simulator.generate_stops(stop_to_stop_distance)
+        self.pedestrian_simulator.generate_stops()
         #print(f"The stops generated")
         while timestep < max_timesteps:
             # Update both simulators at each timestep
@@ -161,7 +160,7 @@ class IntegratedSimulator:
                 self.vehicle_simulator.current_time = timestep
                 
                 self.pedestrian_simulator.generate_passengers(self.vehicle_simulator, timestep)
-                self.populate_the_road( self.pedestrian_simulator.sidewalk, timestep, transient_time, stop_to_stop_distance, safe_stopping_speed, safe_deceleration, jeepney_allowed_rows, truck_allowed_rows)  # Update vehicles
+                self.populate_the_road( self.pedestrian_simulator.sidewalk, timestep, transient_time,  safe_stopping_speed, safe_deceleration, jeepney_allowed_rows, truck_allowed_rows)  # Update vehicles
                 for passenger in self.pedestrian_simulator.passengers:
                     passenger.current_time = timestep
 
@@ -173,7 +172,7 @@ class IntegratedSimulator:
                 self.vehicle_simulator.current_time = timestep
 
                 self.pedestrian_simulator.generate_passengers(self.vehicle_simulator, timestep)
-                self.populate_the_road(  self.pedestrian_simulator.sidewalk,timestep, transient_time, stop_to_stop_distance, safe_stopping_speed, safe_deceleration, jeepney_allowed_rows, truck_allowed_rows) # Update vehicles
+                self.populate_the_road(  self.pedestrian_simulator.sidewalk,timestep, transient_time,  safe_stopping_speed, safe_deceleration, jeepney_allowed_rows, truck_allowed_rows) # Update vehicles
                 for passenger in self.pedestrian_simulator.passengers:
                     passenger.current_time = timestep
                 
@@ -265,11 +264,12 @@ class IntegratedSimulator:
                 "Boarding Time": boarding_time,
                 "Alighting Time": alighting_time})
                 #"Passenger Travel Speed":passenger_travel_speed})
-        #max_speed_timesteps = max([len(vehicle.temporal_speeds) for vehicle in self.vehicle_simulator.vehicles])
+
         #Collect vehicle data
         for vehicle in self.vehicle_simulator.vehicles:
             vehicle.mean_temporal_speed = np.mean(vehicle.temporal_speeds)
-
+            #total_simulation_time = max_timesteps - transient_time
+            #travel_speed = vehicle.calculate_simulation_travel_speed(total_simulation_time) #distance/total time
             data_vehicles.append({"Vehicle ID":vehicle.vehicle_id, "Vehicle Type":vehicle.vehicle_type,
                                         "Mean Speed Across Time":vehicle.mean_temporal_speed,
                                         "Actual Density":self.actual_density, 
@@ -286,20 +286,13 @@ class IntegratedSimulator:
                                         "Actual Density":self.actual_density, 
                                         "Truck Occupancy Fraction":self.actual_truck_occupancy_fraction})
 
-            #For temporal speeds csv file
-            # row = {"Vehicle ID": vehicle.vehicle_id,"Vehicle Type": vehicle.vehicle_type}
-            # for t in range(max_speed_timesteps):
-            #     row[f"Timestep {t}"] = vehicle.temporal_speeds[t] if t < len(vehicle.temporal_speeds) else None
-            # data_temporal_speeds.append(row)
-
         # Return the results in a dataframe
         results_timestep = pd.DataFrame(data_timestep)
         results_vehicles = pd.DataFrame(data_vehicles)
         results_passengers = pd.DataFrame(data_passengers)
         results_spatio_temporal = pd.DataFrame(data_spatio_temporal)
         results_sidewalk_spatio_temporal = pd.DataFrame(data_sidewalk_spatio_temporal)
-        #results_temporal_speeds = pd.DataFrame(data_temporal_speeds)
-        return results_timestep, results_passengers, results_vehicles, results_spatio_temporal, results_sidewalk_spatio_temporal#, results_temporal_speeds
+        return results_timestep, results_passengers, results_vehicles, results_spatio_temporal, results_sidewalk_spatio_temporal
 
     def visualize(self, timestep):
         """Visualize both the vehicle and pedestrian data at a specific timestep."""
