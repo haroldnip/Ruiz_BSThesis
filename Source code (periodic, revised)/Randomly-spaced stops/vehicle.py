@@ -318,6 +318,8 @@ class Vehicle:
     def determine_if_overshot_destination(self):
         """Determines whether at least one passenger in the vehicle has overshot their destination."""
         self.overshot_destination = any(passenger.overshot_destination for passenger in self.passengers_within_vehicle)
+        if self.overshot_destination:
+            print(f"A passenger of jeep {self.vehicle_id} overshot his destination.")
 
 
     def calculate_nearest_destination_distance(self): #This is not final, I stopped right here (Feb. 13, 2025, 9:26 PM)
