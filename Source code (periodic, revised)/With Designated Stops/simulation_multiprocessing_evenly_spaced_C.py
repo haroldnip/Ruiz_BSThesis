@@ -65,7 +65,7 @@ def run_simulation(trial_info):
     integrated_sim = IntegratedSimulator(vehicle_simulator=vehicle_sim, pedestrian_simulator=passenger_sim)
 
     # Setup output folder structure
-    base_dir = '/home/jovyan/Ruiz_BSThesis'
+    base_dir = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
     stop_folder = os.path.join(
         base_dir,
         f"With_Designated_Stops_Case_{case}_StopToStop_{stop_to_stop_distance}_Evenly_Spaced_Stops"
