@@ -38,9 +38,9 @@ def run_simulation(trial_info):
         pedestrian_simulator=pedestrian_simulator
     )
 
-    # Base directory for saving results
-    base_dir = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
-    stop_folder = os.path.join(base_dir, f"Load_Anywhere_Case_{case}_StopToStop_{stop_to_stop_distance}")
+    # Shared output folder for all scripts
+    output_root = os.path.abspath(os.path.join(os.getcwd(), "Load Anywhere Output"))
+    stop_folder = os.path.join(output_root, f"Case_{case}_StopToStop_{stop_to_stop_distance}")
     arrival_folder = os.path.join(stop_folder, f"Kappa_{kappa}", f"Density_{density}", f"PassengerRate_{arrival_rate}")
 
     # Create required subfolders
@@ -48,6 +48,7 @@ def run_simulation(trial_info):
                        ["TimestepSummary", "VehicleData", "PassengerData", "SpatioTemporal", "SidewalkPatioTemporal"]}
     for folder in subfolder_paths.values():
         os.makedirs(folder, exist_ok=True)
+
     # Run the simulation
     timestep_summary, passenger_data, vehicle_data, spatio_temporal, sidewalk_patio_temporal = integrated_simulator.run_simulation(
         10000, 7000, density, kappa, stop_to_stop_distance, safe_stopping_speed,
@@ -75,7 +76,7 @@ def run_simulations_for_params(params_file):
 
     # Simulation parameter ranges
     densities = [round(d, 2) for d in np.arange(0, 1.04, 0.04)]
-    passenger_arrival_rates = [0.3, 1]#0.3 AND 1
+    passenger_arrival_rates = [0.3, 1]  # 0.3 AND 1
     stop_to_stop_distances = [20]
     kappa_values = [0, 0.2, 0.4, 0.7]
     num_trials = 50
@@ -90,7 +91,7 @@ def run_simulations_for_params(params_file):
                   for trial in range(1, num_trials + 1)]
 
     # Run simulations in parallel
-    num_cores = min(mp.cpu_count(), 30) #This maximizes node capacity. Lower. 
+    num_cores = min(mp.cpu_count(), 30)  # This maximizes node capacity. Lower if needed.
     with mp.Pool(num_cores) as pool:
         pool.map(run_simulation, trial_args)
 
