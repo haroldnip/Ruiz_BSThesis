@@ -47,7 +47,7 @@ class IntegratedSimulator:
     def integrated_simulation_step(self, timestep, transient_time): #Integrated Simulation Step
         np.random.shuffle(self.vehicle_simulator.vehicles)
         np.random.shuffle(self.pedestrian_simulator.passengers)
-        
+        self.vehicle_spatial_speeds = []
         if len(self.vehicle_simulator.vehicles) > 0:
             for vehicle in self.vehicle_simulator.vehicles:
                 if vehicle.current_row == 1: # We  dont have to check for speed because vehicles cannot straddle if their v = 0
@@ -80,10 +80,7 @@ class IntegratedSimulator:
                     vehicle.temporal_speeds.append(vehicle.speed)
                 self.pedestrian_simulator.update_occupancy(timestep)
                 self.vehicle_simulator.update_occupancy(timestep)
-                #print(f"Passenger destinations of {vehicle.vehicle_type} {vehicle.vehicle_id} are {vehicle.destination_stops}")
-                # Count vehicles passing through the monitored position (e.g., position 99)
 
-                #if timestep >= transient_time: #Collect data at transient to determine convergence
                 self.counter.count_vehicle(vehicle)
                 self.counter.count_passenger(vehicle)
                 self.counter.count_jeeps(vehicle)
@@ -91,13 +88,13 @@ class IntegratedSimulator:
 
             self.vehicle_simulator.occupancy_history.append((timestep, self.vehicle_simulator.road.occupancy.copy()))
             self.pedestrian_simulator.sidewalk_occupancy_history.append((timestep, self.pedestrian_simulator.sidewalk.occupancy.copy()))
-        #if timestep >= transient_time: #Collect data at transient to determine convergence
-        if len(self.vehicle_simulator.vehicles) > 0:
-            self.vehicle_spatial_speeds.append(vehicle.speed) #include the vehicle's speed on the list of all the vehicle's speed
-            if vehicle.vehicle_type == "jeep":
-                self.jeep_spatial_speeds.append(vehicle.speed)
-            else:
-                self.truck_spatial_speeds.append(vehicle.speed)
+
+            for vehicle in self.vehicle_simulator.vehicles:
+                self.vehicle_spatial_speeds.append(vehicle.speed) #include the vehicle's speed on the list of all the vehicle's speed
+                if vehicle.vehicle_type == "jeep":
+                    self.jeep_spatial_speeds.append(vehicle.speed)
+                else:
+                    self.truck_spatial_speeds.append(vehicle.speed)
 
         for stop in self.pedestrian_simulator.sidewalk.stops:
             if stop:
