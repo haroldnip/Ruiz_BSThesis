@@ -39,7 +39,7 @@ def run_simulation(trial_info):
     )
 
     # Shared output folder for all scripts
-    output_root = os.path.abspath(os.path.join(os.getcwd(), "Load Anywhere Output"))
+    output_root = os.path.abspath(os.path.join(os.getcwd(), "..", "..", "Load Anywhere Output"))
     stop_folder = os.path.join(output_root, f"Case_{case}_StopToStop_{stop_to_stop_distance}")
     arrival_folder = os.path.join(stop_folder, f"Kappa_{kappa}", f"Density_{density}", f"PassengerRate_{arrival_rate}")
 

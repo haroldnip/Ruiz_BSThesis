@@ -46,7 +46,7 @@ def run_simulation(trial_info):
     integrated_sim = IntegratedSimulator(vehicle_simulator=vehicle_sim, pedestrian_simulator=passenger_sim)
 
     # Output directory setup
-    base_dir = os.path.abspath(os.path.join(os.getcwd(), "With Designated Stops Results"))
+    base_dir = os.path.abspath(os.path.join(os.getcwd(), "..", "..", "With Designated Stops Results"))
     stop_folder = os.path.join(base_dir, f"Case_{case}_StopToStop_{stop_to_stop_distance}_Evenly_Spaced_Stops")
     arrival_folder = os.path.join(stop_folder, f"Kappa_{kappa}", f"Density_{density}", f"PassengerRate_{arrival_rate:.3f}")
 
