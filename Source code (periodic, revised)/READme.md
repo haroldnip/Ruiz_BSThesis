@@ -1,5 +1,7 @@
 This is the source code in running heterogeneous vehicle simulation of trucks and jeepneys with passengers and stops.
 
+CAUTION: This program is computationally expensive. The output files can range up to approximately 100 GB when the program completes a running, given the current set of parameters in the multiprocessing files. Visualizations are not shown as the output data would consume too much space.
+
 For the Load Anywhere Behavior folders, run the scripts "simulation_multiprocessing.py", each corresponding to a PT lane implementation setups.
 
 "simulation_multiprocessing.py" - Control set up
