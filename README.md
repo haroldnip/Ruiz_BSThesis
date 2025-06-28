@@ -1,11 +1,13 @@
-**Simulation of truck and jeepney traffic in a two-lane road**  
+# 🚗 Simulation of Truck and Jeepney Traffic in a Two-Lane Road
 
-  
-Author: John Harold G. Ruiz  
-BS Thesis Adviser: Dr. May Lim
+**Author:** John Harold G. Ruiz  
+**BS Thesis Adviser:** Dr. May Lim
 
+---
 
-Source Code (periodic, revised) - Updates as of Jun 2025
-Results (Visualizations) - Updated last June 27, 2025
+## 📂 Repository Structure
 
-See READme file inside the Source code folder for detailed instructions.
+- **Source Code (Periodic, Revised)** – Updated as of **June 2025**
+- **Results (Visualizations)** – Updated as of **June 28, 2025**
+
+For detailed instructions on running the simulation and generating visualizations, **see the `README.md` file inside the `Source Code` folder**.
