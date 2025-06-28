@@ -1,20 +1,32 @@
-This is the source code in running heterogeneous vehicle simulation of trucks and jeepneys with passengers and stops.
+# 🚗 Heterogeneous Vehicle Simulation
 
-CAUTION: This program is computationally expensive. The output files can range up to approximately 100 GB when the program completes a running, given the current set of parameters in the multiprocessing files. Visualizations are not shown as the output data would consume too much space.
+This repository contains the source code for simulating heterogeneous traffic involving **trucks** and **jeepneys**, including passenger behavior and stop configurations.
 
-For the Load Anywhere Behavior folders, run the scripts "simulation_multiprocessing.py", each corresponding to a PT lane implementation setups.
+## ⚠️ Caution: High Computational Load
 
-"simulation_multiprocessing.py" - Control set up
-"simulation_multiprocessing2.py" -  Outer lane truck ban, both lanes open to jeeps
-"simulation_multiprocessing3.py"  - Inner lane jeepney ban, both lanes open to trucks
-"simulation_multiprocessing4.py" - Mutually - exclusive lanes
+This simulation is **computationally expensive**. With the current parameters set in the multiprocessing scripts, it can generate output files up to **~100 GB** in size.
 
+- Visualizations are included in the simulation outputs.
+- **CSV output files are not uploaded** to this repository due to their large size.
 
-For the Evenly-Spaced stops, run the scripts that have the same naming convention as the load anywhere behavior but with additional "evenly_spaced_stops" on its names.
+---
 
-The randomly-spaced stops is an unfinished source code. It still results to errors and have to debugged -- 
+## 🚦 Load-Anywhere Behavior
 
+Each script simulates a different implementation of lane usage for public transport (PT). Run the appropriate file based on the desired lane policy:
 
-This READme file last updated on April 30, 2025.
+| Script Name                        | Description                                                       |
+|-----------------------------------|-------------------------------------------------------------------|
+| `simulation_multiprocessing.py`   | Control setup (baseline)                                          |
+| `simulation_multiprocessing2.py`  | Outer lane truck ban; both lanes open to jeepneys                 |
+| `simulation_multiprocessing3.py`  | Inner lane jeepney ban; both lanes open to trucks                 |
+| `simulation_multiprocessing4.py`  | Mutually exclusive lanes for trucks and jeepneys                  |
 
+---
 
+## 🚏 Evenly-Spaced Stops
+
+To simulate evenly spaced stops, run the versions of the above scripts with `_evenly_spaced_stops` appended to the filenames. For example:
+
+```bash
+python simulation_multiprocessing_evenly_spaced_stops.py
